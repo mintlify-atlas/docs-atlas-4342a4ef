@@ -1,0 +1,168 @@
+{
+  "projectType": "saas",
+  "projectName": "Bastion",
+  "projectDescription": "A multi-purpose Discord bot for server automation, moderation, and community engagement.",
+  "theme": "almond",
+  "primaryColor": "#5865F2",
+  "lightColor": "#949CF7",
+  "darkColor": "#4752C4",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/moderation",
+              "features/auto-moderation",
+              "features/gamification",
+              "features/music",
+              "features/roles"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/settings",
+              "configuration/environment-variables",
+              "configuration/database",
+              "configuration/api-keys"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/docker",
+              "deployment/self-hosting",
+              "deployment/sharding"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/custom-triggers",
+              "advanced/voice-sessions",
+              "advanced/api-server"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Commands",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "commands/overview"
+            ]
+          },
+          {
+            "group": "Moderation",
+            "pages": [
+              "commands/moderation/warn",
+              "commands/moderation/infractions",
+              "commands/moderation/report"
+            ]
+          },
+          {
+            "group": "Server Management",
+            "pages": [
+              "commands/server/channels",
+              "commands/server/roles",
+              "commands/server/messages"
+            ]
+          },
+          {
+            "group": "Community",
+            "pages": [
+              "commands/community/games",
+              "commands/community/polls",
+              "commands/community/giveaways"
+            ]
+          },
+          {
+            "group": "Music & Entertainment",
+            "pages": [
+              "commands/music/playback",
+              "commands/entertainment/search",
+              "commands/entertainment/chat"
+            ]
+          },
+          {
+            "group": "Utility",
+            "pages": [
+              "commands/utility/translate",
+              "commands/utility/calculate",
+              "commands/utility/game-servers"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/endpoints"
+            ]
+          },
+          {
+            "group": "Data Models",
+            "pages": [
+              "api/models/guild",
+              "api/models/member",
+              "api/models/role"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Advanced moderation with auto-mod filters",
+    "Gamification system with levels and rewards",
+    "Music playback with queue management",
+    "Custom role management and auto-roles",
+    "Server logs and audit trails",
+    "User profiles with coins and XP",
+    "Polls, giveaways, and games",
+    "AI chat integration (OpenAI, Gemini, Claude)",
+    "Game stats tracking for multiple games",
+    "Twitch live stream notifications",
+    "Custom triggers and auto-responses",
+    "Voice sessions and channel automation",
+    "Select role menus and self-assignable roles",
+    "Starboard for popular messages",
+    "Multi-language support"
+  ],
+  "publicApiSurface": [
+    "/about - Bot information and getting started",
+    "/config - Server configuration commands",
+    "/warn - Warn users and add infractions",
+    "/role - Role management commands",
+    "/channel - Channel management commands",
+    "/music - Music playback commands",
+    "/poll - Create and manage polls",
+    "/giveaway - Run giveaways",
+    "/games - Interactive games (8ball, flip, roll, rps, russian-roulette)",
+    "/chat - AI-powered chat",
+    "/profile - User profile and stats",
+    "/leaderboard - Server rankings",
+    "/search - Web, Wikipedia, weather, game info",
+    "/gamestats - Game statistics for various games",
+    "/translate - Language translation",
+    "/status - Bot and Discord status"
+  ]
+}

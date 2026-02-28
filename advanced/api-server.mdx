@@ -1,0 +1,470 @@
+---
+title: API Server
+description: Configure and use the Bastion API server for programmatic access to bot data and controls
+---
+
+Bastion includes a built-in REST API server that provides programmatic access to bot information, statistics, and controls. The API server is powered by Tesseract's WebServer class and runs alongside your bot instance.
+
+## Overview
+
+The Bastion API server allows you to:
+
+- Query bot status and statistics
+- Access shard information
+- Retrieve guild and user data
+- Integrate Bastion with external applications
+- Build custom dashboards and monitoring tools
+
+<Info>
+  The API server is optional and only starts when both `port` and `auth` settings are configured (index.ts:35-38).
+</Info>
+
+## Configuration
+
+### Settings File
+
+Configure the API server in your `settings.yaml` file:
+
+```yaml
+# Bastion API Port
+# Port used for Bastion API Server.
+# If port isn't set the API server won't start.
+port: 8377
+
+# Bastion API Auth
+# Auth for accessing the Bastion API Server.
+# If auth isn't set the API server won't start.
+auth: "your-secret-auth-token-here"
+```
+
+<Warning>
+  Both `port` and `auth` must be configured for the API server to start. If either is missing, the server will not initialize (settings.example.yaml:63-73).
+</Warning>
+
+### Environment Variables
+
+You can override settings using environment variables:
+
+```bash
+# Override API port
+export BASTION_API_PORT=8377
+export PORT=8377  # Alternative variable
+
+# Override API auth token
+export BASTION_API_AUTH=your-secret-auth-token-here
+```
+
+Environment variables take precedence over `settings.yaml` values.
+
+<Steps>
+  <Step title="Set the port">
+    Add or modify the `port` setting in `settings.yaml` or set `BASTION_API_PORT` environment variable.
+    
+    ```yaml
+    port: 8377
+    ```
+  </Step>
+  
+  <Step title="Configure authentication">
+    Add a secure authentication token in `settings.yaml` or set `BASTION_API_AUTH` environment variable.
+    
+    ```yaml
+    auth: "your-secret-random-string"
+    ```
+  </Step>
+  
+  <Step title="Start Bastion">
+    Launch Bastion. You should see the API server start on the configured port.
+  </Step>
+  
+  <Step title="Test the connection">
+    Make a test request to verify the API server is running:
+    
+    ```bash
+    curl -H "Authorization: your-secret-random-string" http://localhost:8377/api/stats
+    ```
+  </Step>
+</Steps>
+
+## Implementation
+
+### Server Initialization
+
+The API server is initialized in the main entry point:
+
+```typescript
+// API Server startup (index.ts:34-38)
+import { WebServer } from "@bastion/tesseract";
+
+if (settings.auth && settings.port) {
+  const server = new WebServer(Manager);
+  server.start(settings.port);
+}
+```
+
+The server requires both authentication and port to be configured before starting.
+
+### Settings Class
+
+Settings are managed through a custom Settings class that extends Tesseract's base Settings:
+
+```typescript
+// Settings retrieval (settings.ts:19-27)
+public get port(): string | 8377 {
+  return process.env.BASTION_API_PORT || process.env.PORT || 8377;
+}
+
+public get auth(): string {
+  return process.env.BASTION_API_AUTH || this.data.auth;
+}
+```
+
+<Note>
+  The Settings class automatically prioritizes environment variables over file-based configuration (settings.ts:19-27).
+</Note>
+
+## Authentication
+
+All API requests must include authentication in the request headers:
+
+```bash
+Authorization: your-secret-auth-token-here
+```
+
+### Security Best Practices
+
+1. **Use strong tokens**: Generate a long, random string for your auth token
+2. **Keep it secret**: Never commit your auth token to version control
+3. **Use environment variables**: Set `BASTION_API_AUTH` in production environments
+4. **Rotate regularly**: Change your auth token periodically
+5. **Restrict access**: Use firewalls to limit API access to trusted IPs
+
+<Warning>
+  The auth token is transmitted with every request. Always use HTTPS in production to encrypt the authentication header and protect your token from interception.
+</Warning>
+
+## Usage Examples
+
+### Using curl
+
+Basic API request with curl:
+
+```bash
+curl -H "Authorization: your-secret-auth-token" \
+  http://localhost:8377/api/stats
+```
+
+### Using JavaScript/TypeScript
+
+Make API requests from Node.js applications:
+
+```javascript
+const fetch = require('node-fetch');
+
+const apiUrl = 'http://localhost:8377';
+const authToken = 'your-secret-auth-token';
+
+async function getBotStats() {
+  const response = await fetch(`${apiUrl}/api/stats`, {
+    headers: {
+      'Authorization': authToken
+    }
+  });
+  
+  const data = await response.json();
+  console.log(data);
+}
+
+getBotStats();
+```
+
+### Using Python
+
+Integrate with Python applications:
+
+```python
+import requests
+
+api_url = 'http://localhost:8377'
+auth_token = 'your-secret-auth-token'
+
+headers = {
+    'Authorization': auth_token
+}
+
+response = requests.get(f'{api_url}/api/stats', headers=headers)
+data = response.json()
+print(data)
+```
+
+## WebServer Features
+
+The Tesseract WebServer class provides:
+
+- **Shard Management**: Access to ShardingManager for multi-shard bot information
+- **RESTful Endpoints**: Standard REST API endpoints for data access
+- **Built-in Authentication**: Automatic auth token validation
+- **Error Handling**: Graceful error responses
+
+<Info>
+  The WebServer is part of the @bastion/tesseract framework and provides standardized API endpoints across all Tesseract-based bots (index.ts:6).
+</Info>
+
+## Network Configuration
+
+### Local Development
+
+For local development, use the default configuration:
+
+```yaml
+port: 8377
+```
+
+Access the API at: `http://localhost:8377`
+
+### Production Deployment
+
+In production environments:
+
+1. **Use environment variables** for configuration:
+   ```bash
+   export BASTION_API_PORT=8377
+   export BASTION_API_AUTH=your-production-token
+   ```
+
+2. **Configure reverse proxy** (recommended):
+   ```nginx
+   server {
+     listen 443 ssl;
+     server_name api.yourdomain.com;
+     
+     location / {
+       proxy_pass http://localhost:8377;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+     }
+   }
+   ```
+
+3. **Use HTTPS** to encrypt all API traffic
+
+4. **Configure firewall rules** to restrict access:
+   ```bash
+   # Allow only specific IPs
+   ufw allow from 203.0.113.0/24 to any port 8377
+   ```
+
+### Docker Configuration
+
+When running Bastion in Docker, expose the API port:
+
+```yaml
+# docker-compose.yml
+services:
+  bastion:
+    image: bastion
+    ports:
+      - "8377:8377"
+    environment:
+      - BASTION_API_PORT=8377
+      - BASTION_API_AUTH=${API_AUTH_TOKEN}
+```
+
+<Note>
+  If you're running MongoDB locally and using Bastion's Docker image, remember to replace `127.0.0.1` with `host.docker.internal` in your MongoDB URI (settings.example.yaml:22-24).
+</Note>
+
+## Integration Examples
+
+### Custom Dashboard
+
+Build a web dashboard that displays bot statistics:
+
+```javascript
+// dashboard.js
+const express = require('express');
+const fetch = require('node-fetch');
+
+const app = express();
+const BASTION_API = 'http://localhost:8377';
+const AUTH_TOKEN = process.env.BASTION_API_AUTH;
+
+app.get('/dashboard', async (req, res) => {
+  const stats = await fetch(`${BASTION_API}/api/stats`, {
+    headers: { 'Authorization': AUTH_TOKEN }
+  }).then(r => r.json());
+  
+  res.render('dashboard', { stats });
+});
+
+app.listen(3000);
+```
+
+### Monitoring Integration
+
+Integrate with monitoring tools like Prometheus:
+
+```python
+# prometheus_exporter.py
+from prometheus_client import start_http_server, Gauge
+import requests
+import time
+
+api_url = 'http://localhost:8377'
+auth_token = os.environ['BASTION_API_AUTH']
+
+# Define metrics
+guild_count = Gauge('bastion_guild_count', 'Number of guilds')
+user_count = Gauge('bastion_user_count', 'Number of users')
+
+def collect_metrics():
+    headers = {'Authorization': auth_token}
+    stats = requests.get(f'{api_url}/api/stats', headers=headers).json()
+    
+    guild_count.set(stats['guilds'])
+    user_count.set(stats['users'])
+
+if __name__ == '__main__':
+    start_http_server(9090)
+    while True:
+        collect_metrics()
+        time.sleep(15)
+```
+
+### Webhook Notifications
+
+Trigger external webhooks based on bot events:
+
+```javascript
+// webhook_notifier.js
+const fetch = require('node-fetch');
+
+class BastionWebhook {
+  constructor(apiUrl, authToken, webhookUrl) {
+    this.apiUrl = apiUrl;
+    this.authToken = authToken;
+    this.webhookUrl = webhookUrl;
+  }
+  
+  async checkStatus() {
+    const stats = await fetch(`${this.apiUrl}/api/stats`, {
+      headers: { 'Authorization': this.authToken }
+    }).then(r => r.json());
+    
+    // Send notification if bot is down or has issues
+    if (stats.status !== 'healthy') {
+      await this.sendAlert(stats);
+    }
+  }
+  
+  async sendAlert(stats) {
+    await fetch(this.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: `⚠️ Bastion Status Alert`,
+        embeds: [{
+          title: 'Bot Status Issue',
+          description: `Status: ${stats.status}`,
+          color: 0xff0000
+        }]
+      })
+    });
+  }
+}
+```
+
+## Port Configuration
+
+The default port is `8377`, but you can configure any available port:
+
+```yaml
+# Common port choices
+port: 8377  # Default Bastion port
+port: 3000  # Common development port
+port: 8080  # Alternative HTTP port
+port: 5000  # Common API port
+```
+
+<Warning>
+  Ensure the port you choose is:
+  - Not already in use by another application
+  - Allowed through your firewall
+  - Available for the user running Bastion
+  - Not a privileged port (< 1024) unless running as root
+</Warning>
+
+## Troubleshooting
+
+### API Server Not Starting
+
+If the API server doesn't start:
+
+1. **Check both settings are configured**:
+   ```bash
+   # Verify in settings.yaml or environment
+   echo $BASTION_API_PORT
+   echo $BASTION_API_AUTH
+   ```
+
+2. **Verify port is available**:
+   ```bash
+   # Check if port is in use
+   lsof -i :8377
+   netstat -an | grep 8377
+   ```
+
+3. **Check for errors in logs**:
+   Look for startup errors or warnings in the Bastion logs
+
+### Authentication Failures
+
+- Verify the auth token exactly matches (no extra spaces or newlines)
+- Check you're including the `Authorization` header in requests
+- Ensure environment variables are properly exported
+
+### Connection Refused
+
+- Verify the API server started successfully
+- Check firewall rules allow connections on the configured port
+- Ensure you're connecting to the correct host and port
+- Try connecting from localhost first to rule out network issues
+
+### Port Already in Use
+
+If you see "port already in use" errors:
+
+1. **Find the process using the port**:
+   ```bash
+   lsof -i :8377
+   ```
+
+2. **Stop the conflicting process** or **choose a different port**:
+   ```yaml
+   port: 8378  # Use alternative port
+   ```
+
+## Security Considerations
+
+<Warning>
+  The API server provides access to sensitive bot data. Follow these security guidelines:
+  
+  - Never expose the API server directly to the internet without HTTPS
+  - Use strong, randomly generated auth tokens (minimum 32 characters)
+  - Rotate auth tokens regularly
+  - Implement rate limiting on your reverse proxy
+  - Monitor API access logs for suspicious activity
+  - Use IP whitelisting where possible
+  - Store auth tokens in environment variables, never in code
+</Warning>
+
+## Best Practices
+
+1. **Environment Variables**: Always use environment variables for sensitive configuration in production
+2. **HTTPS Only**: Never use HTTP in production; always use HTTPS via reverse proxy
+3. **Token Rotation**: Rotate your auth token regularly (monthly or quarterly)
+4. **Monitoring**: Set up monitoring and alerting for API availability
+5. **Rate Limiting**: Implement rate limiting to prevent abuse
+6. **Access Logs**: Enable and monitor access logs for security auditing
+7. **Backup Configuration**: Keep encrypted backups of your configuration
+8. **Documentation**: Document your API endpoints and authentication flow for your team

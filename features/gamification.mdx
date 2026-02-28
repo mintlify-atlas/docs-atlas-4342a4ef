@@ -1,0 +1,395 @@
+---
+title: Gamification
+description: Engage your community with Bastion's leveling system, XP rewards, Bastion Coins, karma, and leaderboards.
+---
+
+Bastion's gamification system transforms your Discord server into an engaging community where members earn XP, level up, collect coins, and compete on leaderboards. Reward active participation and create a thriving community.
+
+## Leveling System
+
+Members automatically earn experience points (XP) by chatting in your server and level up as they gain more XP.
+
+### How Leveling Works
+
+<Steps>
+  <Step title="Earn XP">
+    Members earn XP automatically when they send messages. Server boosters earn **2x XP** per message.
+  </Step>
+  
+  <Step title="Level Up">
+    When a member earns enough XP to reach a new level, they level up automatically.
+  </Step>
+  
+  <Step title="Earn Coins">
+    Members receive Bastion Coins as a reward when leveling up. The reward is calculated as: `level × multiplier`
+  </Step>
+  
+  <Step title="Get Roles">
+    If level roles are configured, members automatically receive roles when they reach certain levels.
+  </Step>
+</Steps>
+
+**XP Cooldown:** Members can only earn XP once every 13 seconds to prevent spam.
+
+**Source:** `~/workspace/source/src/listeners/messageCreate.ts:59-121`
+
+### Level Calculation
+
+Bastion uses a progressive leveling formula that requires more XP for each level:
+
+```javascript
+requiredXP = level² × 100 × multiplier
+```
+
+**Maximum Level:** 1000 (configurable via `gamificationMultiplier`)
+
+**Source:** `~/workspace/source/src/utils/gamification.js`
+
+## Member Profiles
+
+View detailed member profiles showing level, XP, coins, karma, and more.
+
+### Profile Command
+
+Use `/profile` to view a member's Bastion profile:
+
+```
+/profile user:@member
+```
+
+If no user is specified, it shows your own profile.
+
+**Profile Information:**
+- **Rank** - Server-wide ranking based on level, XP, karma, and coins
+- **Level** - Current level
+- **XP** - Total experience points earned
+- **Karma** - Karma points from thanks received
+- **Bastion Coins** - Current coin balance
+- **Infractions** - Number of active warnings
+- **Progress Bar** - Visual progress to next level
+
+**Source:** `~/workspace/source/src/commands/profile.ts:18`
+
+<Note>
+Members are ranked by: Level > XP > Karma > Bastion Coins. Higher values in earlier categories take priority.
+</Note>
+
+## Bastion Coins
+
+The currency system for your server. Members earn coins through various activities and can use them for rewards.
+
+### Earning Coins
+
+Members can earn Bastion Coins through:
+
+<CardGroup cols={2}>
+  <Card title="Leveling Up" icon="arrow-up">
+    Automatic coin rewards when reaching a new level.
+    
+    Formula: `level × currency_multiplier`
+  </Card>
+  
+  <Card title="Daily Claims" icon="gift">
+    Claim daily rewards with `/claim` command.
+    
+    Base reward: 42-128 coins (varies)
+  </Card>
+  
+  <Card title="Claim Streaks" icon="fire">
+    Claim daily for 7 days straight to earn bonus: 512-1,024 coins.
+  </Card>
+  
+  <Card title="Server Boosting" icon="rocket">
+    Server boosters earn 2x rewards from claims and leveling.
+  </Card>
+</CardGroup>
+
+### Claim Command
+
+Claim your daily rewards:
+
+```
+/claim
+```
+
+**Claim Mechanics:**
+- Can be claimed once per day
+- Base reward: 42-128 coins (random)
+- **New members** (< 3 days): Receive half rewards
+- **Server boosters:** Receive 2x rewards
+- **7-day streak:** Bonus 512-1,024 coins, then streak resets
+
+**Source:** `~/workspace/source/src/commands/claim.ts:22`
+
+<Warning>
+Claim streaks reset if you miss a day. If you claimed yesterday, you can continue your streak today.
+</Warning>
+
+## Karma System
+
+Reward helpful and appreciated members with the karma system.
+
+### How Karma Works
+
+Members automatically earn karma points when other members thank them:
+
+```
+Thank you @member for helping me!
+Thankyou @member!
+Thanks @member, you're awesome!
+```
+
+**Trigger Words:** "thank you", "thankyou", "thanks"
+
+When a message contains one of these phrases and mentions other members, those members each receive **+1 karma**.
+
+**Source:** `~/workspace/source/src/listeners/messageCreate.ts:174-195`
+
+<Note>
+You cannot give yourself karma. Self-mentions are automatically filtered out.
+</Note>
+
+## Leaderboards
+
+Showcase top members with server leaderboards.
+
+### Leaderboard Command
+
+View the top 5 members in your server:
+
+```
+/leaderboard
+```
+
+**Displays:**
+- Top 5 members ranked by: Level > XP > Karma > Coins
+- Member names and IDs
+- Individual stats: Level, XP, Karma, Bastion Coins
+- Position numbers (#1, #2, etc.)
+
+**Source:** `~/workspace/source/src/commands/leaderboard.ts:14`
+
+## Gamification Configuration
+
+Configure how gamification works in your server.
+
+### Enable/Disable Gamification
+
+Control gamification features through guild settings:
+
+```yaml
+# Enable/disable the entire system
+gamification: true
+
+# Enable/disable level up messages
+gamificationMessages: true
+
+# Channel for level up announcements
+gamificationChannel: "channel-id"
+
+# XP multiplier for leveling (default: 1.0)
+gamificationMultiplier: 1.5
+```
+
+### Configuration Options
+
+<Accordion title="gamification">
+  **Type:** Boolean
+  
+  **Default:** `false`
+  
+  Master switch for the entire gamification system. When disabled, members don't earn XP or coins from messages.
+  
+  **Database Field:** `Guild.gamification`
+  
+  **Source:** `~/workspace/source/src/models/Guild.ts:24`
+</Accordion>
+
+<Accordion title="gamificationMessages">
+  **Type:** Boolean
+  
+  **Default:** `false`
+  
+  Controls whether level up messages are sent when members level up.
+  
+  **Database Field:** `Guild.gamificationMessages`
+  
+  **Source:** `~/workspace/source/src/models/Guild.ts:25`
+</Accordion>
+
+<Accordion title="gamificationChannel">
+  **Type:** Channel ID (string)
+  
+  **Default:** None (uses same channel as message)
+  
+  Dedicated channel for level up announcements. If not set, level up messages appear in the channel where the member leveled up.
+  
+  **Database Field:** `Guild.gamificationChannel`
+  
+  **Source:** `~/workspace/source/src/models/Guild.ts:26`
+</Accordion>
+
+<Accordion title="gamificationMultiplier">
+  **Type:** Number
+  
+  **Default:** 1.0
+  
+  Multiplier for XP requirements. Higher values make leveling slower but allow for higher max levels.
+  
+  **Database Field:** `Guild.gamificationMultiplier`
+  
+  **Source:** `~/workspace/source/src/models/Guild.ts:27`
+</Accordion>
+
+## Level Roles
+
+Automatically assign roles to members when they reach specific levels.
+
+### Configure Level Roles
+
+Use the `/role levels` command to set up level roles:
+
+<Tabs>
+  <Tab title="Assign Role to Level">
+    ```
+    /role levels role:@Bronze level:5
+    ```
+    
+    Members who reach level 5 will automatically receive the Bronze role.
+  </Tab>
+  
+  <Tab title="View Role's Level">
+    ```
+    /role levels role:@Bronze
+    ```
+    
+    Shows which level the Bronze role is assigned to.
+  </Tab>
+  
+  <Tab title="View Level's Roles">
+    ```
+    /role levels level:10
+    ```
+    
+    Shows all roles assigned to level 10.
+  </Tab>
+  
+  <Tab title="View All Level Roles">
+    ```
+    /role levels
+    ```
+    
+    Shows a summary of all level role configurations.
+  </Tab>
+  
+  <Tab title="Remove Level">
+    ```
+    /role levels remove:10
+    ```
+    
+    Unassigns all roles from level 10.
+  </Tab>
+</Tabs>
+
+**Permissions Required:** Manage Roles (both user and bot)
+
+**Source:** `~/workspace/source/src/commands/role/levels.ts:16`
+
+### How Level Roles Work
+
+1. When a member levels up, Bastion checks for configured level roles
+2. Bastion finds the **nearest level** at or below the member's current level
+3. Roles from that level are **added**
+4. Roles from other levels are **removed**
+5. Changes are applied automatically
+
+**Example:**
+- Level 5: Bronze
+- Level 10: Silver  
+- Level 15: Gold
+
+When a member reaches level 12, they get Silver (nearest level) and Bronze is removed.
+
+**Source:** `~/workspace/source/src/listeners/messageCreate.ts:31-57`
+
+<Note>
+Members receive roles from the highest level they've achieved. Roles from lower levels are automatically removed.
+</Note>
+
+## Admin Commands
+
+Server administrators can manage member stats directly.
+
+### Give Command
+
+Give (or take) coins and XP from members:
+
+```
+/give user:@member coins:1000 xp:500
+```
+
+**Parameters:**
+- `user` (required) - The member to update
+- `coins` (required) - Amount of coins (use negative to take)
+- `xp` (required) - Amount of XP (use negative to take)
+
+**Permissions Required:** Manage Guild
+
+**Restrictions:** Non-owners cannot give to themselves
+
+**Source:** `~/workspace/source/src/commands/give.ts:14`
+
+## Database Schema
+
+Member gamification data is stored in the Member model:
+
+```typescript
+interface Member {
+  balance: number;        // Bastion Coins
+  experience: number;     // Total XP earned
+  level: number;          // Current level
+  karma: number;          // Karma points
+  lastClaimed: number;    // Timestamp of last claim
+  claimStreak: number;    // Current claim streak (0-7)
+}
+```
+
+**Source:** `~/workspace/source/src/models/Member.ts:10-15`
+
+## Best Practices
+
+<Accordion title="Set Reasonable Multipliers">
+  Choose gamification multipliers based on your server activity:
+  
+  - **High activity servers:** 1.5-2.0 (slower leveling)
+  - **Medium activity:** 1.0 (default)
+  - **Low activity:** 0.5-0.8 (faster leveling)
+  
+  This ensures members can reach meaningful levels within a reasonable timeframe.
+</Accordion>
+
+<Accordion title="Create Level Role Milestones">
+  Space out level roles to create a sense of progression:
+  
+  - **Early levels:** 5, 10, 15 (quick wins)
+  - **Mid levels:** 25, 50, 75 (regular goals)
+  - **High levels:** 100, 150, 200 (prestigious achievements)
+  
+  This keeps members engaged over time.
+</Accordion>
+
+<Accordion title="Use Dedicated Announcement Channels">
+  Set a `gamificationChannel` to avoid cluttering active channels with level up messages. Consider using a read-only achievements channel.
+</Accordion>
+
+<Accordion title="Encourage Karma">
+  Promote the karma system in your server rules and onboarding. Encourage members to thank helpful people, creating a positive community culture.
+</Accordion>
+
+<Accordion title="Monitor the Economy">
+  Regularly check coin balances using the leaderboard. If inflation becomes an issue, adjust:
+  
+  - Reduce claim rewards
+  - Lower gamification multiplier
+  - Introduce coin sinks (if you have custom features)
+</Accordion>

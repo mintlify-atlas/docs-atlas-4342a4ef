@@ -1,0 +1,173 @@
+---
+title: Poll Command
+description: Create interactive polls in your Discord server with up to 10 options and automatic reactions for voting.
+---
+
+The poll command allows server managers to create interactive polls that members can vote on using reactions. Polls support up to 10 options and can optionally be configured to end automatically after a specified time.
+
+## Creating a Poll
+
+```bash
+/poll question:What should we do this weekend? option1:Gaming option2:Movie Night option3:Sports
+```
+
+<Note>
+  Requires the **Manage Server** permission to create polls.
+</Note>
+
+## Parameters
+
+<ParamField path="question" type="string" required>
+  The question for the poll. This will be displayed as the poll title.
+</ParamField>
+
+<ParamField path="option1" type="string" required>
+  The 1st option for the poll's answer.
+</ParamField>
+
+<ParamField path="option2" type="string" required>
+  The 2nd option for the poll's answer.
+</ParamField>
+
+<ParamField path="option3" type="string">
+  The 3rd option for the poll's answer.
+</ParamField>
+
+<ParamField path="option4" type="string">
+  The 4th option for the poll's answer.
+</ParamField>
+
+<ParamField path="option5" type="string">
+  The 5th option for the poll's answer.
+</ParamField>
+
+<ParamField path="option6" type="string">
+  The 6th option for the poll's answer.
+</ParamField>
+
+<ParamField path="option7" type="string">
+  The 7th option for the poll's answer.
+</ParamField>
+
+<ParamField path="option8" type="string">
+  The 8th option for the poll's answer.
+</ParamField>
+
+<ParamField path="option9" type="string">
+  The 9th option for the poll's answer.
+</ParamField>
+
+<ParamField path="option10" type="string">
+  The 10th option for the poll's answer.
+</ParamField>
+
+<ParamField path="timer" type="integer">
+  Number of hours the poll should run before automatically ending. Must be between 1 and 720 hours (30 days).
+  
+  <Note>
+    Timer limits and the number of simultaneous timed polls depend on your [Bastion Premium tier](/premium).
+  </Note>
+</ParamField>
+
+## How It Works
+
+1. **Poll Creation**: When you create a poll, Bastion posts an embed with your question and all the options
+2. **Automatic Reactions**: Bastion automatically adds letter reactions (🇦, 🇧, 🇨, etc.) corresponding to each option
+3. **Member Voting**: Server members vote by clicking on the reaction that matches their choice
+4. **Poll Management**: The poll creator can end the poll manually using the "End Poll" button
+5. **Auto-End**: If a timer is set, the poll will automatically end after the specified duration
+
+## Example Usage
+
+<Tabs>
+  <Tab title="Simple Poll">
+    ```bash
+    /poll question:Should we add a new channel? option1:Yes option2:No
+    ```
+    
+    Creates a basic yes/no poll.
+  </Tab>
+  
+  <Tab title="Multiple Options">
+    ```bash
+    /poll question:Which game should we play? option1:Valorant option2:Minecraft option3:Among Us option4:League of Legends option5:Other
+    ```
+    
+    Creates a poll with 5 different game options.
+  </Tab>
+  
+  <Tab title="Timed Poll">
+    ```bash
+    /poll question:Where should we host the next event? option1:Discord option2:Twitch option3:YouTube timer:24
+    ```
+    
+    Creates a poll that automatically ends after 24 hours.
+  </Tab>
+  
+  <Tab title="Maximum Options">
+    ```bash
+    /poll question:Pick your favorite color option1:Red option2:Blue option3:Green option4:Yellow option5:Purple option6:Orange option7:Pink option8:Black option9:White option10:Gray
+    ```
+    
+    Creates a poll with the maximum 10 options.
+  </Tab>
+</Tabs>
+
+## Poll Display
+
+Polls are displayed as an embed with:
+- **Author**: "POLL" label at the top
+- **Title**: Your poll question
+- **Fields**: Each option with its corresponding letter emoji (🇦, 🇧, 🇨, etc.)
+- **Reactions**: Automatic letter reactions for voting
+- **Button**: "End Poll" button for manual poll termination
+- **Timestamp**: (Timed polls only) Shows when the poll will end
+
+## Managing Polls
+
+### Ending a Poll Manually
+
+Click the **End Poll** button on the poll message. This button is only visible to members with the Manage Server permission.
+
+### Viewing Results
+
+To see poll results, check the reaction counts on the poll message. Each reaction shows how many members voted for that option.
+
+## Premium Features
+
+Poll timer duration and simultaneous timed polls are limited based on your Bastion Premium tier:
+
+| Feature | Free | Premium Tiers |
+|---------|------|---------------|
+| Maximum poll duration | Limited | Up to 720 hours (30 days) |
+| Simultaneous timed polls | Limited | Increased limit based on tier |
+
+<Note>
+  If you try to exceed your tier's limits, Bastion will notify you about upgrading to a higher tier.
+</Note>
+
+## Best Practices
+
+- **Clear Questions**: Write clear, concise questions that are easy to understand
+- **Distinct Options**: Make sure each option is clearly different from the others
+- **Reasonable Duration**: Set appropriate timer durations (24-72 hours for most polls)
+- **Option Limit**: While you can add up to 10 options, 3-5 options often work best for clarity
+- **Pin Important Polls**: Consider pinning important polls so members can easily find them
+
+## Limitations
+
+- Minimum of 2 options required (option1 and option2)
+- Maximum of 10 options
+- Poll timer range: 1-720 hours (if using timed polls)
+- Only members with Manage Server permission can create and end polls
+- Timed poll limits apply based on your Premium tier
+
+## Technical Details
+
+Poll data is stored in the database with the following information:
+- Message ID
+- Channel ID
+- Guild ID
+- End time (for timed polls)
+
+Timed polls automatically expire and are cleaned up 10 days after they end.

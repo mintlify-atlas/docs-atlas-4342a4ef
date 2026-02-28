@@ -1,0 +1,222 @@
+---
+title: AI Chat Command
+description: Have conversations with Bastion using AI models from OpenAI, Google Gemini, or Anthropic Claude.
+---
+
+Bastion can engage in natural conversations using state-of-the-art AI language models. Chat with Bastion to ask questions, get help, or just have a casual conversation.
+
+## /chat
+
+Ask questions or chat with Bastion using AI-powered conversation.
+
+<ParamField path="message" type="string" required>
+  Your message to Bastion.
+</ParamField>
+
+### Usage Examples
+
+```bash
+# Ask a question
+/chat message: What's the weather like in Tokyo?
+
+# Get help
+/chat message: How do I set up roles in Discord?
+
+# Casual conversation
+/chat message: Tell me a joke
+```
+
+<Note>
+  The `/chat` command is marked as owner-only in the source code. Adjust the `owner: true` setting in your deployment if you want to enable it for all users.
+</Note>
+
+## Supported AI Providers
+
+Bastion supports three AI providers. Configure one (or more) in your `settings.yaml`:
+
+### OpenAI (ChatGPT)
+
+Use OpenAI's GPT models for chat responses.
+
+```yaml
+openai:
+  apiKey: "sk-your-openai-key"
+  model: "gpt-5-nano"
+  maxTokens: 100
+```
+
+<ParamField path="apiKey" type="string" required>
+  Your OpenAI API key from [platform.openai.com](https://platform.openai.com)
+</ParamField>
+
+<ParamField path="model" type="string" default="gpt-5-nano">
+  The OpenAI model to use (e.g., `gpt-4`, `gpt-3.5-turbo`). See [OpenAI Pricing](https://openai.com/api/pricing) for available models.
+</ParamField>
+
+<ParamField path="maxTokens" type="number" default="100">
+  Maximum length of responses in tokens. Higher values allow longer responses but cost more. Use the [OpenAI Tokenizer](https://platform.openai.com/tokenizer) to estimate.
+</ParamField>
+
+### Google Gemini
+
+Use Google's Gemini models for chat responses.
+
+```yaml
+gemini:
+  apiKey: "your-gemini-key"
+  model: "gemini-2.5-flash-lite"
+  maxOutputTokens: 256
+```
+
+<ParamField path="apiKey" type="string" required>
+  Your Google AI API key from [ai.google.dev](https://ai.google.dev/pricing)
+</ParamField>
+
+<ParamField path="model" type="string" default="gemini-2.5-flash-lite">
+  The Gemini model to use. See [Gemini Models](https://ai.google.dev/gemini-api/docs/models/gemini) for available options.
+</ParamField>
+
+<ParamField path="maxOutputTokens" type="number" default="256">
+  Maximum length of responses in tokens. See [Gemini Tokens](https://ai.google.dev/gemini-api/docs/tokens) for details.
+</ParamField>
+
+### Anthropic Claude
+
+Use Anthropic's Claude models for chat responses.
+
+```yaml
+anthropic:
+  apiKey: "your-anthropic-key"
+  model: "claude-haiku-4-5"
+  maxTokens: 128
+```
+
+<ParamField path="apiKey" type="string" required>
+  Your Anthropic API key from [console.anthropic.com](https://console.anthropic.com)
+</ParamField>
+
+<ParamField path="model" type="string" default="claude-haiku-4-5">
+  The Claude model to use. See [Claude Models](https://docs.anthropic.com/en/docs/about-claude/models) for available options.
+</ParamField>
+
+<ParamField path="maxTokens" type="number" default="128">
+  Maximum length of responses in tokens. See [Model Comparison](https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table) for token limits.
+</ParamField>
+
+## Conversation Features
+
+### Context Awareness
+
+Bastion analyzes the last 10 messages in the channel to provide contextual responses. This includes:
+- Message history from both users and Bastion
+- User display names for attribution
+- Channel and server context
+
+### Conversation Style
+
+Bastion is configured with a system prompt that ensures:
+- **Casual, Discord-style communication** - No formal email-like responses
+- **Concise replies** - 1-2 short sentences by default
+- **Natural conversation flow** - Uses second-person when appropriate
+- **Context-appropriate** - Understands server/channel names are themes only
+- **Direct and helpful** - Minimal boilerplate, asks clarifying questions when needed
+
+### Priority Order
+
+Bastion checks for API keys in this order:
+1. OpenAI (ChatGPT)
+2. Google Gemini
+3. Anthropic Claude
+
+The first configured provider will be used.
+
+## Configuration Example
+
+Here's a complete example with all three providers:
+
+```yaml settings.yaml
+# Configure ONE or more AI providers
+
+# Option 1: OpenAI ChatGPT
+openai:
+  apiKey: "sk-proj-..."
+  model: "gpt-4"
+  maxTokens: 150
+
+# Option 2: Google Gemini
+gemini:
+  apiKey: "AIza..."
+  model: "gemini-1.5-pro"
+  maxOutputTokens: 512
+
+# Option 3: Anthropic Claude
+anthropic:
+  apiKey: "sk-ant-..."
+  model: "claude-3-5-sonnet-20241022"
+  maxTokens: 256
+```
+
+<Info>
+  You only need to configure **one** provider. If multiple are configured, OpenAI takes priority, followed by Gemini, then Claude.
+</Info>
+
+## Cost Considerations
+
+<Warning>
+  Chat commands consume API tokens and incur costs based on usage. Consider:
+  - Setting appropriate `maxTokens` limits
+  - Monitoring API usage in your provider dashboard
+  - Using cost-effective models for high-volume usage
+  - Restricting access with the `owner: true` setting
+</Warning>
+
+### Cost Comparison
+
+- **OpenAI**: Pricing varies by model. See [OpenAI Pricing](https://openai.com/pricing)
+- **Google Gemini**: Generous free tier available. See [Gemini Pricing](https://ai.google.dev/pricing)
+- **Anthropic**: Competitive pricing. See [Anthropic Pricing](https://www.anthropic.com/pricing#anthropic-api)
+
+## Technical Details
+
+### Message History
+
+- Fetches last 10 messages from the channel
+- Filters messages with content only
+- Preserves chronological order
+- Removes first message if it's from Bastion (avoids confusion)
+
+### User Attribution
+
+User messages include display names for context:
+```
+Username: message content
+```
+
+Bastion's responses are attributed as "assistant" without name labels.
+
+### System Prompt
+
+The system prompt dynamically includes:
+- Server name
+- Channel name
+- User's display name
+- Conversation guidelines
+
+### Error Handling
+
+If no API keys are configured, returns:
+> "You haven't set up API keys for any gen AI APIs."
+
+---
+
+## Getting Started
+
+1. Choose an AI provider (OpenAI, Gemini, or Claude)
+2. Sign up and get an API key
+3. Add the configuration to your `settings.yaml`
+4. Restart Bastion
+5. Use `/chat message: Hello!` to test
+
+<Tip>
+  Start with Google Gemini's free tier to test the feature before committing to a paid plan.
+</Tip>

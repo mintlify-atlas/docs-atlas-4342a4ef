@@ -1,0 +1,168 @@
+---
+title: Game Server
+description: Query and display information from nearly any game server that makes its status publicly available
+---
+
+The `/game-server` command fetches real-time information from game servers using the GameDig library. It supports hundreds of different games and displays server status, player count, map information, and more.
+
+## Usage
+
+```
+/game-server game:<game_id> hostname:<server_address> [port:<port_number>]
+```
+
+## Parameters
+
+<ParamField path="game" type="string" required>
+  The game ID for the game server. This identifies which game protocol to use when querying the server.
+  
+  Examples: `minecraft`, `csgo`, `valheim`, `rust`, `ark`, `tf2`, `garrysmod`
+</ParamField>
+
+<ParamField path="hostname" type="string" required>
+  The IP address or domain name of the game server.
+  
+  Examples: `play.example.com`, `192.168.1.100`
+</ParamField>
+
+<ParamField path="port" type="integer">
+  The connection port number of the game server. Use the query port if the connection port doesn't work.
+  
+  **Range:** 1-65535
+  
+  <Note>
+  If not specified, the command will use the default port for the specified game type.
+  </Note>
+</ParamField>
+
+## Examples
+
+### Query a Minecraft Server
+
+```
+/game-server game:minecraft hostname:play.hypixel.net
+```
+
+This will display:
+- Server name
+- Current map/world
+- Player count (online/max)
+- Connection address
+- List of top 5 players (if available)
+- Server ping
+
+### Query a Counter-Strike Server with Port
+
+```
+/game-server game:csgo hostname:192.168.1.100 port:27015
+```
+
+### Query a Valheim Server
+
+```
+/game-server game:valheim hostname:valheim.example.com port:2456
+```
+
+### Query a Rust Server
+
+```
+/game-server game:rust hostname:rust-server.example.com port:28015
+```
+
+## Server Information Displayed
+
+The command returns an embed with the following information:
+
+### Basic Information
+
+- **Server Name** - The name of the game server
+- **Map** - The current map or world being played
+- **Players** - Current player count (including bots) and maximum players
+- **Connect** - The connection string to join the server
+
+### Player Details
+
+<Info>
+If player information is available, the command displays up to 5 top players sorted by score, showing:
+
+- Player name
+- Score
+- Team (if applicable)
+- Ping (if available)
+</Info>
+
+### Server Status
+
+- **Ping** - Response time to the server in milliseconds
+- **Password Protected** - Indicates if the server requires a password
+
+## Supported Games
+
+The command uses GameDig and supports hundreds of games including:
+
+### Popular Games
+
+- **Minecraft** - `minecraft`
+- **Counter-Strike: Global Offensive** - `csgo`
+- **Counter-Strike 2** - `cs2`
+- **Valheim** - `valheim`
+- **Rust** - `rust`
+- **ARK: Survival Evolved** - `ark`
+- **Team Fortress 2** - `tf2`
+- **Garry's Mod** - `garrysmod`
+- **Terraria** - `terraria`
+- **Unturned** - `unturned`
+- **7 Days to Die** - `7d2d`
+- **DayZ** - `dayz`
+- **Satisfactory** - `satisfactory`
+- **V Rising** - `vrising`
+
+### How to Find Game IDs
+
+<Note>
+For a complete list of supported games and their IDs, visit the [GameDig supported games list](https://github.com/gamedig/node-gamedig#games-list).
+
+Game IDs are typically lowercase versions of the game name with special characters removed.
+</Note>
+
+## Port Information
+
+<Info>
+Different games use different default ports:
+
+- **Minecraft** - 25565 (Java Edition), 19132 (Bedrock Edition)
+- **Counter-Strike** - 27015
+- **Rust** - 28015
+- **ARK** - 27015 (query), 7777 (connection)
+- **Valheim** - 2456-2457
+
+Some games use separate query ports and connection ports. If the connection port doesn't work, try using the query port instead.
+</Info>
+
+## Error Handling
+
+The command may fail if:
+
+- The game ID is invalid or unsupported
+- The server is offline or unreachable
+- The hostname/IP address is incorrect
+- The port number is wrong
+- The server has query functionality disabled
+- The server is behind a firewall blocking queries
+
+<Note>
+Make sure the server has query/status functionality enabled and that it's accessible from the internet if you're querying a remote server.
+</Note>
+
+## Use Cases
+
+- Check server status before joining
+- Monitor player counts on your favorite servers
+- Verify server is online and responsive
+- See who's currently playing
+- Check current map rotation
+- Share server information with friends
+
+## Source Code
+
+Implementation: `src/commands/gameserver.ts:40-97`

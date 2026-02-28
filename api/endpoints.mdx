@@ -1,0 +1,260 @@
+---
+title: "API Endpoints"
+description: "Complete reference of available API endpoints and their usage"
+---
+
+## Available Endpoints
+
+The Bastion API currently provides monitoring and status endpoints for bot management.
+
+## GET /status
+
+Retrieves real-time status information for all bot shards.
+
+<Note>
+All endpoints require authentication. See the [Authentication](/api/authentication) guide for details.
+</Note>
+
+### Request
+
+```bash
+GET /status
+```
+
+**Headers:**
+- `Authorization` (required) - Your API auth token
+
+### Response
+
+Returns an array of shard status objects.
+
+<ResponseField name="id" type="string" required>
+  Shard ID or range of IDs (e.g., "0" or "0 / 1")
+</ResponseField>
+
+<ResponseField name="uptime" type="number" required>
+  Shard uptime in milliseconds since last restart
+</ResponseField>
+
+<ResponseField name="wsStatus" type="number" required>
+  WebSocket connection status code
+  
+  <Expandable title="WebSocket Status Codes">
+    - `0` - Ready
+    - `1` - Connecting
+    - `2` - Reconnecting
+    - `3` - Idle
+    - `4` - Nearly
+    - `5` - Disconnected
+    - `6` - Waiting for guilds
+    - `7` - Identifying
+    - `8` - Resuming
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="wsPing" type="number" required>
+  WebSocket latency in milliseconds (ping to Discord gateway)
+</ResponseField>
+
+<ResponseField name="guildCount" type="number" required>
+  Number of guilds (servers) this shard is handling
+</ResponseField>
+
+### Example Response
+
+```json
+[
+  {
+    "id": "0",
+    "uptime": 3600000,
+    "wsStatus": 0,
+    "wsPing": 45,
+    "guildCount": 1250
+  },
+  {
+    "id": "1",
+    "uptime": 3600000,
+    "wsStatus": 0,
+    "wsPing": 52,
+    "guildCount": 1180
+  }
+]
+```
+
+### Example Usage
+
+<CodeGroup>
+
+```bash cURL
+curl -H "Authorization: your-auth-token" \
+  http://localhost:8377/status
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:8377/status', {
+  headers: {
+    'Authorization': 'your-auth-token'
+  }
+});
+
+const shards = await response.json();
+
+shards.forEach(shard => {
+  console.log(`Shard ${shard.id}:`);
+  console.log(`  Uptime: ${Math.floor(shard.uptime / 1000 / 60)} minutes`);
+  console.log(`  Ping: ${shard.wsPing}ms`);
+  console.log(`  Guilds: ${shard.guildCount}`);
+  console.log(`  Status: ${shard.wsStatus === 0 ? 'Ready' : 'Not Ready'}`);
+});
+```
+
+```python Python
+import requests
+import json
+
+headers = {'Authorization': 'your-auth-token'}
+response = requests.get('http://localhost:8377/status', headers=headers)
+shards = response.json()
+
+for shard in shards:
+    print(f"Shard {shard['id']}:")
+    print(f"  Uptime: {shard['uptime'] // 1000 // 60} minutes")
+    print(f"  Ping: {shard['wsPing']}ms")
+    print(f"  Guilds: {shard['guildCount']}")
+    print(f"  Status: {'Ready' if shard['wsStatus'] == 0 else 'Not Ready'}")
+```
+
+```typescript TypeScript
+interface ShardStatus {
+  id: string;
+  uptime: number;
+  wsStatus: number;
+  wsPing: number;
+  guildCount: number;
+}
+
+const response = await fetch('http://localhost:8377/status', {
+  headers: {
+    'Authorization': 'your-auth-token'
+  }
+});
+
+const shards: ShardStatus[] = await response.json();
+
+// Calculate total guilds across all shards
+const totalGuilds = shards.reduce((sum, shard) => sum + shard.guildCount, 0);
+console.log(`Total guilds: ${totalGuilds}`);
+
+// Check if all shards are ready
+const allReady = shards.every(shard => shard.wsStatus === 0);
+console.log(`All shards ready: ${allReady}`);
+```
+
+</CodeGroup>
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Health Monitoring" icon="heart-pulse">
+    Monitor bot health by checking shard status and WebSocket connection states
+  </Card>
+  <Card title="Performance Metrics" icon="gauge-high">
+    Track uptime, latency, and guild distribution across shards
+  </Card>
+  <Card title="Alerting" icon="bell">
+    Set up alerts when shards disconnect or latency exceeds thresholds
+  </Card>
+  <Card title="Load Balancing" icon="scale-balanced">
+    Analyze guild distribution to optimize shard configuration
+  </Card>
+</CardGroup>
+
+## Error Responses
+
+### 401 Unauthorized
+
+Returned when authentication fails:
+
+```json
+{
+  "message": "Unauthorized",
+  "status": 401
+}
+```
+
+**Solution:** Verify your auth token is correct and included in the `Authorization` header.
+
+### 500 Internal Server Error
+
+Returned when the server encounters an error:
+
+```json
+{
+  "message": "Internal Server Error",
+  "status": 500
+}
+```
+
+**Common causes:**
+- Bot shards are not fully initialized
+- Database connection issues
+- Internal server error during shard evaluation
+
+## Implementation Details
+
+The `/status` endpoint uses Discord.js sharding manager to broadcast an evaluation function to all shards:
+
+```typescript
+// From src/routes/status.ts
+const shards = await shardingManger.broadcastEval(client => ({
+    id: client.shard.ids.join(" / "),
+    uptime: client.uptime,
+    wsStatus: client.ws.status,
+    wsPing: client.ws.ping,
+    guildCount: client.guilds.cache.size,
+}));
+```
+
+<Info>
+The endpoint collects data from each shard independently, ensuring accurate real-time metrics even with multiple shards.
+</Info>
+
+## Future Endpoints
+
+The API is designed to be extensible. Potential future endpoints may include:
+
+- `GET /guilds/:id` - Retrieve guild configuration
+- `PATCH /guilds/:id` - Update guild settings
+- `GET /members/:guild/:user` - Get member profile
+- `GET /roles/:id` - Get role configuration
+- `GET /stats` - Aggregate statistics across all guilds
+
+<Note>
+Want to contribute? The API codebase is open source. Add new routes in `src/routes/` and they'll be automatically registered by the Tesseract WebServer.
+</Note>
+
+## Rate Limiting
+
+Currently, no rate limiting is implemented. Consider adding rate limiting middleware if:
+
+- Exposing the API publicly
+- Handling high request volumes
+- Preventing abuse from compromised tokens
+
+Recommended packages:
+- `express-rate-limit` - Simple rate limiting middleware
+- `rate-limit-redis` - Redis-backed rate limiting for distributed systems
+
+## CORS Configuration
+
+The API does not have CORS enabled by default. To allow cross-origin requests, add CORS middleware:
+
+```javascript
+import cors from 'cors';
+
+// In your Express setup
+app.use(cors({
+  origin: 'https://your-dashboard.com',
+  credentials: true
+}));
+```

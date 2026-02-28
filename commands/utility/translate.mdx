@@ -1,0 +1,120 @@
+---
+title: Translate
+description: Translate text from one language to another using Google Translate
+---
+
+The `/translate` command allows you to translate text from one language to another using Google Translate. It supports automatic language detection and translation to any supported language.
+
+## Usage
+
+```
+/translate text:<text> [to:<language>] [from:<language>]
+```
+
+## Parameters
+
+<ParamField path="text" type="string" required>
+  The text you want to translate.
+</ParamField>
+
+<ParamField path="to" type="string">
+  The language you want to translate to. Uses ISO 639-1 language codes (e.g., `en`, `es`, `fr`, `de`, `ja`).
+  
+  **Default:** `en` (English)
+</ParamField>
+
+<ParamField path="from" type="string">
+  The language you want to translate from. Uses ISO 639-1 language codes.
+  
+  **Default:** `auto` (automatic detection)
+</ParamField>
+
+## Examples
+
+### Translate to English (automatic detection)
+
+```
+/translate text:Hola, ¿cómo estás?
+```
+
+This will automatically detect Spanish and translate to English:
+
+```
+Hello, how are you?
+Translated from ES to EN
+```
+
+### Translate from English to Spanish
+
+```
+/translate text:Good morning! to:es from:en
+```
+
+Result:
+
+```
+¡Buenos días!
+Translated from EN to ES
+```
+
+### Translate to Japanese
+
+```
+/translate text:Welcome to Bastion to:ja
+```
+
+Result:
+
+```
+バスティオンへようこそ
+Translated from EN to JA
+```
+
+### Translate from French to German
+
+```
+/translate text:Bonjour le monde to:de from:fr
+```
+
+Result:
+
+```
+Hallo Welt
+Translated from FR to DE
+```
+
+## Language Codes
+
+<Info>
+The command uses ISO 639-1 language codes. Here are some common codes:
+
+- `en` - English
+- `es` - Spanish
+- `fr` - French
+- `de` - German
+- `ja` - Japanese
+- `zh` - Chinese
+- `ko` - Korean
+- `ru` - Russian
+- `ar` - Arabic
+- `hi` - Hindi
+- `pt` - Portuguese
+- `it` - Italian
+
+For a complete list, refer to [ISO 639-1 codes](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
+</Info>
+
+## How It Works
+
+1. The command uses the Google Translate API to perform translations
+2. If `from` is not specified, it automatically detects the source language
+3. If `to` is not specified, it defaults to English (`en`)
+4. The response includes both the translated text and the detected/specified source and target languages
+
+<Note>
+The translation quality depends on Google Translate's capabilities. For best results, use clear and grammatically correct text.
+</Note>
+
+## Source Code
+
+Implementation: `src/commands/translate.ts:36-49`

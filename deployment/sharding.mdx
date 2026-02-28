@@ -1,0 +1,481 @@
+---
+title: Sharding Configuration
+description: Scale Bastion across multiple processes and servers for large Discord deployments
+---
+
+Sharding allows Bastion to handle large numbers of Discord guilds by distributing the load across multiple processes. This is essential for bots in over 2,500 guilds or those experiencing performance issues.
+
+## Understanding Sharding
+
+Discord requires bots to use sharding when they reach certain thresholds. Each shard handles a portion of your guilds, distributing the workload.
+
+<Info>
+  Bastion uses the **@bastion/tesseract** framework's `ShardingManager` to handle automatic shard spawning and management.
+</Info>
+
+### When to Use Sharding
+
+You should implement sharding when:
+
+- Your bot is in 2,500+ guilds (Discord requirement)
+- You're experiencing performance degradation
+- You want to prepare for growth
+- You need better resource distribution
+
+<Warning>
+  Discord enforces sharding at 2,500 guilds. Your bot will fail to connect if you don't implement sharding beyond this threshold.
+</Warning>
+
+## How Bastion Handles Sharding
+
+Bastion includes built-in sharding support through its entry point (`src/index.ts`):
+
+```typescript
+import path from "node:path";
+import { Logger, ShardingManager, WebServer } from "@bastion/tesseract";
+import DiscordRPC from "discord-rpc";
+import dotenv from "dotenv";
+import picocolors from "picocolors";
+
+import Settings from "./utils/settings.js";
+
+const settings = new Settings();
+
+// configure dotenv
+dotenv.config({ quiet: true });
+
+// Sharding Manager
+const Manager = new ShardingManager(path.resolve("dist", "bastion.js"));
+
+// Spawn shards
+Manager.spawn().catch(Logger.error);
+
+// Sharding Manager Events
+Manager.on("shardCreate", shard => {
+    Logger.info(`Shard ${shard.id} — Launching ${ picocolors.gray(`[ ${shard.id + 1} of ${ Manager.totalShards } ]`) }`);
+});
+
+// Tesseract Web Server
+if (settings.auth && settings.port) {
+    const server = new WebServer(Manager);
+    server.start(settings.port);
+}
+```
+
+<Note>
+  Bastion automatically determines the optimal number of shards based on your guild count. You don't need to manually configure shard counts in most cases.
+</Note>
+
+## Automatic Sharding
+
+By default, Bastion uses automatic sharding:
+
+<Steps>
+  <Step title="No configuration needed">
+    When you run `npm start`, the ShardingManager automatically:
+    - Fetches the recommended shard count from Discord
+    - Spawns the appropriate number of shards
+    - Distributes guilds across shards
+  </Step>
+
+  <Step title="Monitor shard startup">
+    Watch the logs to see shards being created:
+    ```
+    Shard 0 — Launching [ 1 of 4 ]
+    Shard 1 — Launching [ 2 of 4 ]
+    Shard 2 — Launching [ 3 of 4 ]
+    Shard 3 — Launching [ 4 of 4 ]
+    ```
+  </Step>
+</Steps>
+
+## Manual Shard Configuration
+
+For advanced use cases, you can manually configure sharding by modifying `src/index.ts`.
+
+### Specify Total Shards
+
+```typescript
+import { ShardingManager } from "@bastion/tesseract";
+import path from "node:path";
+
+const Manager = new ShardingManager(path.resolve("dist", "bastion.js"), {
+    totalShards: 8,  // Manually set to 8 shards
+});
+
+Manager.spawn().catch(Logger.error);
+```
+
+### Spawn Specific Shards
+
+Useful for running different shards on different servers:
+
+```typescript
+const Manager = new ShardingManager(path.resolve("dist", "bastion.js"), {
+    totalShards: 8,
+    shardList: [0, 1, 2, 3],  // Only spawn shards 0-3 on this server
+});
+
+Manager.spawn().catch(Logger.error);
+```
+
+### Shard Spawn Delay
+
+Control the delay between spawning shards (default is 5.5 seconds):
+
+```typescript
+const Manager = new ShardingManager(path.resolve("dist", "bastion.js"), {
+    shardDelay: 10000,  // 10 seconds between spawns
+});
+
+Manager.spawn().catch(Logger.error);
+```
+
+<Info>
+  Discord rate limits shard connections. The default 5.5 second delay helps avoid hitting these limits.
+</Info>
+
+## Environment-Based Shard Configuration
+
+You can use environment variables to configure sharding without modifying code:
+
+### Create a .env configuration
+
+```bash
+# .env
+BOT_TOKEN=YOUR_BOT_TOKEN
+BOT_ID=YOUR_BOT_ID
+
+# Sharding configuration
+TOTAL_SHARDS=8
+SHARD_LIST=0,1,2,3
+SHARD_DELAY=10000
+```
+
+### Modify src/index.ts to read from environment
+
+```typescript
+import { ShardingManager } from "@bastion/tesseract";
+import path from "node:path";
+import dotenv from "dotenv";
+
+dotenv.config({ quiet: true });
+
+const shardConfig: any = {
+    totalShards: process.env.TOTAL_SHARDS 
+        ? parseInt(process.env.TOTAL_SHARDS) 
+        : "auto",
+};
+
+if (process.env.SHARD_LIST) {
+    shardConfig.shardList = process.env.SHARD_LIST
+        .split(",")
+        .map(s => parseInt(s.trim()));
+}
+
+if (process.env.SHARD_DELAY) {
+    shardConfig.shardDelay = parseInt(process.env.SHARD_DELAY);
+}
+
+const Manager = new ShardingManager(
+    path.resolve("dist", "bastion.js"),
+    shardConfig
+);
+
+Manager.spawn().catch(Logger.error);
+```
+
+## Multi-Server Sharding
+
+For very large bots, you can run different shards on different servers.
+
+### Server 1 Configuration
+
+```bash
+# .env on Server 1
+BOT_TOKEN=YOUR_BOT_TOKEN
+TOTAL_SHARDS=8
+SHARD_LIST=0,1,2,3
+```
+
+### Server 2 Configuration
+
+```bash
+# .env on Server 2
+BOT_TOKEN=YOUR_BOT_TOKEN
+TOTAL_SHARDS=8
+SHARD_LIST=4,5,6,7
+```
+
+<Warning>
+  All servers must use the **same total shard count**. Only the `SHARD_LIST` should differ.
+</Warning>
+
+### Requirements for Multi-Server Sharding
+
+<Steps>
+  <Step title="Same total shard count">
+    All instances must agree on the total number of shards.
+  </Step>
+
+  <Step title="Unique shard lists">
+    Each server should handle different, non-overlapping shards.
+  </Step>
+
+  <Step title="Shared MongoDB">
+    All instances must connect to the same MongoDB database for data consistency.
+  </Step>
+
+  <Step title="Synchronized configuration">
+    Use the same `settings.yaml` or environment variables across all servers (except `SHARD_LIST`).
+  </Step>
+</Steps>
+
+## Monitoring Shards
+
+### View Active Shards
+
+Bastion logs shard activity. Monitor your logs to track shard health:
+
+<CodeGroup>
+
+```bash PM2
+pm2 logs bastion
+```
+
+```bash Docker
+docker logs -f bastion
+```
+
+```bash Direct
+npm start
+# Watch console output
+```
+
+</CodeGroup>
+
+### Shard Events
+
+Bastion logs important shard events:
+
+- `shardCreate` - Shard is being spawned
+- `shardReady` - Shard connected to Discord
+- `shardDisconnect` - Shard disconnected
+- `shardReconnecting` - Shard attempting to reconnect
+- `shardResume` - Shard resumed session
+
+## Tesseract Web Server
+
+Bastion includes a web server for monitoring and managing shards:
+
+```yaml
+# settings.yaml
+port: 8377
+auth: "YOUR_SECURE_AUTH_TOKEN"
+```
+
+When configured, the web server starts automatically:
+
+```typescript
+// src/index.ts
+if (settings.auth && settings.port) {
+    const server = new WebServer(Manager);
+    server.start(settings.port);
+}
+```
+
+<Info>
+  The Tesseract Web Server provides API endpoints for shard management and monitoring. Set `auth` in your settings for security.
+</Info>
+
+## Performance Optimization
+
+### Recommended Shard Calculation
+
+Discord recommends 1 shard per 1,000 guilds:
+
+- 1-1,000 guilds: 1 shard (no sharding needed)
+- 1,001-2,500 guilds: 2-3 shards (recommended before enforcement)
+- 2,501-5,000 guilds: 5 shards
+- 5,001-10,000 guilds: 10 shards
+
+### Resource Allocation
+
+Each shard runs in a separate process and consumes:
+
+- Memory: ~150-300 MB per shard
+- CPU: Varies based on guild activity
+
+<Note>
+  Monitor your system resources and adjust shard counts accordingly. More shards = better distribution but higher resource usage.
+</Note>
+
+### Shard Configuration Tips
+
+<Steps>
+  <Step title="Start with auto sharding">
+    Let Discord calculate the optimal shard count initially.
+  </Step>
+
+  <Step title="Monitor performance">
+    Use `pm2 monit` or `docker stats` to watch resource usage per shard.
+  </Step>
+
+  <Step title="Increase gradually">
+    If experiencing issues, increase shards incrementally (e.g., 4 → 6 → 8).
+  </Step>
+
+  <Step title="Balance guilds">
+    Discord automatically distributes guilds evenly across shards.
+  </Step>
+</Steps>
+
+## Disable Music Activity with Multiple Shards
+
+When running multiple shards, disable music activity updates:
+
+```yaml
+# settings.yaml
+musicActivity: false
+```
+
+Or via environment variable:
+
+```bash
+BASTION_MUSIC_ACTIVITY=FALSE
+```
+
+<Warning>
+  Music activity updates can cause race conditions across shards. Disable this feature when using multiple shards.
+</Warning>
+
+## Troubleshooting
+
+### Shards timing out
+
+Increase spawn delay:
+
+```typescript
+const Manager = new ShardingManager(path.resolve("dist", "bastion.js"), {
+    shardDelay: 10000,  // 10 seconds
+});
+```
+
+### Shards constantly reconnecting
+
+1. Check your internet connection stability
+2. Verify Discord API status
+3. Ensure adequate system resources
+4. Check MongoDB connection
+
+### Shards not spawning
+
+```bash
+# Rebuild Bastion
+npm run build
+
+# Check for errors
+node dist/index.js
+```
+
+### Memory issues
+
+Reduce the number of shards per server or increase system RAM:
+
+```bash
+# Monitor memory usage
+pm2 monit
+
+# Or with Docker
+docker stats bastion
+```
+
+### Guild distribution issues
+
+Ensure all instances use the same `totalShards` value. Guild distribution is automatic and based on guild ID.
+
+## Best Practices
+
+<Steps>
+  <Step title="Use automatic sharding">
+    Start with automatic sharding unless you have specific requirements.
+  </Step>
+
+  <Step title="Plan for growth">
+    Manually set shard counts higher than current needs to avoid frequent restarts.
+  </Step>
+
+  <Step title="Monitor shard health">
+    Regularly check logs and use the Tesseract Web Server for monitoring.
+  </Step>
+
+  <Step title="Shared database">
+    Always use a centralized MongoDB instance for multi-server setups.
+  </Step>
+
+  <Step title="Synchronized updates">
+    Update all shard instances simultaneously to avoid version conflicts.
+  </Step>
+
+  <Step title="Disable music activity">
+    Turn off `musicActivity` when using multiple shards.
+  </Step>
+</Steps>
+
+## Advanced: Custom Shard Spawning
+
+For complete control over shard spawning:
+
+```typescript
+import { ShardingManager } from "@bastion/tesseract";
+import path from "node:path";
+
+const Manager = new ShardingManager(path.resolve("dist", "bastion.js"), {
+    totalShards: 8,
+    mode: "process",  // or "worker"
+    shardArgs: [],
+    execArgv: [],
+    token: process.env.BOT_TOKEN,
+});
+
+// Spawn shards with custom logic
+Manager.spawn({
+    amount: 8,
+    delay: 5500,
+    timeout: 30000,
+}).catch(Logger.error);
+
+// Custom shard event handling
+Manager.on("shardCreate", shard => {
+    Logger.info(`Launched shard ${shard.id}`);
+    
+    shard.on("ready", () => {
+        Logger.info(`Shard ${shard.id} is ready`);
+    });
+    
+    shard.on("disconnect", () => {
+        Logger.warn(`Shard ${shard.id} disconnected`);
+    });
+    
+    shard.on("reconnecting", () => {
+        Logger.info(`Shard ${shard.id} is reconnecting`);
+    });
+});
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Docker Deployment" icon="docker" href="/deployment/docker">
+    Deploy sharded Bastion with Docker
+  </Card>
+  <Card title="Self-Hosting" icon="server" href="/deployment/self-hosting">
+    Learn about manual deployment options
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/settings">
+    Configure Bastion's features and behavior
+  </Card>
+  <Card title="API Server" icon="server" href="/advanced/api-server">
+    Set up the Bastion API server
+  </Card>
+</CardGroup>

@@ -1,0 +1,400 @@
+---
+title: "Member Model"
+description: "Complete schema reference for Member data model and gamification profiles"
+---
+
+## Overview
+
+The Member model stores per-server member data including gamification stats, economy balances, and moderation history. Each member has a separate profile for every server they're in, allowing server-specific progression and data.
+
+## Schema Definition
+
+<Note>
+The Member model is defined in `src/models/Member.ts` using Mongoose ODM for MongoDB.
+</Note>
+
+### Identification
+
+<ResponseField name="user" type="string" required>
+  Discord user ID of the member
+  
+  **Reference:** Links to User collection
+</ResponseField>
+
+<ResponseField name="guild" type="string" required>
+  Discord guild (server) ID where this member profile belongs
+  
+  **Reference:** Links to Guild collection
+</ResponseField>
+
+<Note>
+The combination of `user` and `guild` must be unique. A compound index ensures each user has only one profile per guild.
+</Note>
+
+### Economy System
+
+<ResponseField name="balance" type="number" required default="0">
+  Member's currency balance in this server. Used for purchasing items, gambling, and trading.
+  
+  **Constraints:** 
+  - Required field
+  - Defaults to 0 for new members
+  - Can go negative if configured
+</ResponseField>
+
+### Gamification System
+
+<ResponseField name="experience" type="number" required default="0">
+  Total experience points (XP) earned by the member in this server
+  
+  **Usage:**
+  - Gained through server activity (messages, voice time, etc.)
+  - Modified by guild's `gamificationMultiplier`
+  - Used to calculate level progression
+</ResponseField>
+
+<ResponseField name="level" type="number" required default="0">
+  Current level of the member based on accumulated experience
+  
+  **Note:** Level increases trigger level-up events and potential role rewards
+</ResponseField>
+
+<ResponseField name="karma" type="number" required default="0">
+  Karma points received from other members (reputation system)
+  
+  **Features:**
+  - Can be positive or negative
+  - Given by other members as recognition
+  - Displayed on profile and leaderboards
+</ResponseField>
+
+### Daily Rewards
+
+<ResponseField name="lastClaimed" type="number">
+  Unix timestamp (in milliseconds) when the member last claimed daily rewards
+  
+  **Usage:** Prevents claiming rewards multiple times per day
+</ResponseField>
+
+<ResponseField name="claimStreak" type="number" required default="0">
+  Number of consecutive days the member has claimed daily rewards
+  
+  **Features:**
+  - Increments with each consecutive day
+  - Resets if a day is missed
+  - May provide bonus rewards for long streaks
+</ResponseField>
+
+### Moderation
+
+<ResponseField name="infractions" type="string[]">
+  Array of infraction document IDs associated with this member
+  
+  **Usage:**
+  - Links to Infraction documents
+  - Used for automatic moderation thresholds
+  - Tracks warning, timeout, kick, and ban history
+</ResponseField>
+
+### Referral System
+
+<ResponseField name="referral" type="string">
+  User ID of the member who referred this user to the server
+  
+  **Features:**
+  - Tracks referral chains
+  - May provide bonuses to referrer
+  - Used for growth analytics
+</ResponseField>
+
+### Boosts & Perks
+
+<ResponseField name="boost" type="number">
+  Unix timestamp (in milliseconds) when the member boosted the server
+  
+  **Usage:**
+  - Tracks individual boost contributions
+  - May unlock special perks or roles
+  - Used for boost leaderboards
+</ResponseField>
+
+## Indexes
+
+```typescript
+// Compound unique index on user + guild
+{
+  user: 1,
+  guild: 1
+}
+```
+
+This ensures each user can only have one member profile per guild.
+
+## Example Document
+
+```json
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "user": "266290969974931457",
+  "guild": "267022940967665664",
+  "balance": 15000,
+  "experience": 125000,
+  "level": 25,
+  "karma": 150,
+  "lastClaimed": 1709251200000,
+  "claimStreak": 14,
+  "infractions": [
+    "507f191e810c19729de860ea",
+    "507f191e810c19729de860eb"
+  ],
+  "referral": "123456789012345678",
+  "boost": 1706659200000
+}
+```
+
+## Usage Examples
+
+<CodeGroup>
+
+```typescript TypeScript (Mongoose)
+import MemberModel, { Member } from './models/Member';
+
+// Find or create a member profile
+const member = await MemberModel.findOneAndUpdate(
+  {
+    user: '266290969974931457',
+    guild: '267022940967665664'
+  },
+  {},
+  { upsert: true, new: true }
+);
+
+// Award experience and check for level up
+const xpGain = 100;
+member.experience += xpGain;
+
+const newLevel = calculateLevel(member.experience);
+if (newLevel > member.level) {
+  member.level = newLevel;
+  console.log(`Member leveled up to ${newLevel}!`);
+}
+
+await member.save();
+
+// Add balance
+member.balance += 500;
+await member.save();
+```
+
+```javascript JavaScript (Mongoose)
+const MemberModel = require('./models/Member').default;
+
+// Get top members by experience
+const leaderboard = await MemberModel
+  .find({ guild: '267022940967665664' })
+  .sort({ experience: -1 })
+  .limit(10)
+  .populate('user');
+
+console.log('Top 10 members by XP:', leaderboard);
+
+// Check if member can claim daily reward
+const member = await MemberModel.findOne({
+  user: '266290969974931457',
+  guild: '267022940967665664'
+});
+
+const now = Date.now();
+const oneDayMs = 24 * 60 * 60 * 1000;
+
+if (!member.lastClaimed || now - member.lastClaimed >= oneDayMs) {
+  // Award daily reward
+  member.balance += 1000;
+  member.lastClaimed = now;
+  
+  // Update streak
+  if (member.lastClaimed && now - member.lastClaimed < 2 * oneDayMs) {
+    member.claimStreak += 1;
+  } else {
+    member.claimStreak = 1;
+  }
+  
+  await member.save();
+  console.log(`Streak: ${member.claimStreak} days`);
+}
+```
+
+```javascript MongoDB Query
+// Find all members in a guild
+db.members.find({ guild: "267022940967665664" })
+
+// Find members with high karma
+db.members.find({
+  guild: "267022940967665664",
+  karma: { $gte: 100 }
+})
+
+// Get total balance across a guild
+db.members.aggregate([
+  { $match: { guild: "267022940967665664" } },
+  { $group: { _id: null, totalBalance: { $sum: "$balance" } } }
+])
+
+// Find members with active claim streaks
+db.members.find({
+  guild: "267022940967665664",
+  claimStreak: { $gte: 7 }
+})
+
+// Award bonus XP to all members
+db.members.updateMany(
+  { guild: "267022940967665664" },
+  { $inc: { experience: 1000 } }
+)
+```
+
+</CodeGroup>
+
+## Gamification Calculations
+
+### Level Formula
+
+Bastion typically uses an XP curve for leveling. A common formula:
+
+```typescript
+function calculateLevel(experience: number): number {
+  return Math.floor(0.1 * Math.sqrt(experience));
+}
+
+function getXPForLevel(level: number): number {
+  return Math.pow(level * 10, 2);
+}
+```
+
+**Example:**
+- Level 1: 100 XP
+- Level 5: 2,500 XP
+- Level 10: 10,000 XP
+- Level 25: 62,500 XP
+- Level 50: 250,000 XP
+
+### XP Multiplier
+
+The guild's `gamificationMultiplier` affects XP gains:
+
+```typescript
+const baseXP = 25; // XP per message
+const guild = await GuildModel.findById(guildId);
+const multiplier = guild?.gamificationMultiplier || 1.0;
+
+const actualXP = baseXP * multiplier;
+```
+
+## Common Queries
+
+<AccordionGroup>
+  <Accordion title="Get Member Rank in Guild">
+    ```typescript
+    const member = await MemberModel.findOne({ user: userId, guild: guildId });
+    
+    const rank = await MemberModel.countDocuments({
+      guild: guildId,
+      experience: { $gt: member.experience }
+    }) + 1;
+    
+    console.log(`Member rank: #${rank}`);
+    ```
+  </Accordion>
+
+  <Accordion title="Check Infraction Threshold">
+    ```typescript
+    const member = await MemberModel.findOne({ user: userId, guild: guildId });
+    const guild = await GuildModel.findById(guildId);
+    
+    const infractionCount = member.infractions?.length || 0;
+    
+    if (guild.infractionsBanThreshold && 
+        infractionCount >= guild.infractionsBanThreshold) {
+      console.log('Member should be banned!');
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Transfer Balance Between Members">
+    ```typescript
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      const sender = await MemberModel.findOne(
+        { user: senderId, guild: guildId },
+        null,
+        { session }
+      );
+      
+      const receiver = await MemberModel.findOne(
+        { user: receiverId, guild: guildId },
+        null,
+        { session }
+      );
+      
+      const amount = 1000;
+      
+      if (sender.balance < amount) {
+        throw new Error('Insufficient balance');
+      }
+      
+      sender.balance -= amount;
+      receiver.balance += amount;
+      
+      await sender.save({ session });
+      await receiver.save({ session });
+      
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Reset Member Data">
+    ```typescript
+    // Reset gamification data only
+    await MemberModel.findOneAndUpdate(
+      { user: userId, guild: guildId },
+      {
+        experience: 0,
+        level: 0,
+        karma: 0
+      }
+    );
+    
+    // Complete profile reset
+    await MemberModel.findOneAndUpdate(
+      { user: userId, guild: guildId },
+      {
+        balance: 0,
+        experience: 0,
+        level: 0,
+        karma: 0,
+        lastClaimed: null,
+        claimStreak: 0,
+        infractions: [],
+        boost: null
+      }
+    );
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Models
+
+- [Guild Model](/api/models/guild) - Server configuration
+- [Role Model](/api/models/role) - Role rewards and requirements
+
+<Info>
+Member documents are automatically created when a user first interacts with Bastion in a server (sends a message, uses a command, etc.).
+</Info>

@@ -1,0 +1,448 @@
+---
+title: "Role Model"
+description: "Complete schema reference for Role data model and automation settings"
+---
+
+## Overview
+
+The Role model extends Discord roles with additional metadata and automation features. It enables level-based role rewards, purchasable roles, referral roles, and various auto-assignment rules.
+
+## Schema Definition
+
+<Note>
+The Role model is defined in `src/models/Role.ts` using Mongoose ODM for MongoDB.
+</Note>
+
+### Identification
+
+<ResponseField name="_id" type="string" required>
+  Discord role ID. This is the primary identifier and must match the actual Discord role ID.
+</ResponseField>
+
+<ResponseField name="id" type="string">
+  Alternative role ID field (optional duplicate of `_id`)
+</ResponseField>
+
+<ResponseField name="guild" type="string" required>
+  Discord guild (server) ID where this role belongs
+  
+  **Reference:** Links to Guild collection
+</ResponseField>
+
+### Display Properties
+
+<ResponseField name="description" type="string">
+  Custom description for the role, displayed in role selection menus and embeds
+  
+  **Constraints:** Maximum 100 characters
+</ResponseField>
+
+<ResponseField name="emoji" type="string">
+  Emoji associated with the role, used in role selection menus
+  
+  **Formats:** 
+  - Unicode emoji: `🎮`
+  - Custom emoji: `<:name:id>` or just the emoji ID
+</ResponseField>
+
+### Gamification Integration
+
+<ResponseField name="level" type="number">
+  Required level for members to automatically receive this role
+  
+  **Usage:**
+  - When a member reaches this level, the role is automatically assigned
+  - Requires guild's `gamification` to be enabled
+  - Multiple roles can have different level requirements
+  
+  **Example:** Set to `10` to award this role when members reach level 10
+</ResponseField>
+
+### Economy Integration
+
+<ResponseField name="price" type="number">
+  Cost in server currency for members to purchase this role
+  
+  **Features:**
+  - Members can buy the role using `/role buy` command
+  - Requires guild's `gambling` or economy to be enabled
+  - Price is deducted from member's balance
+  
+  **Example:** Set to `5000` to make the role cost 5,000 coins
+</ResponseField>
+
+### Referral System
+
+<ResponseField name="invite" type="string">
+  Discord invite code required to receive this role
+  
+  **Usage:**
+  - Members who join through this specific invite get the role
+  - Used for partner roles or special access
+  - Must be a valid Discord invite code (not full URL)
+</ResponseField>
+
+<ResponseField name="referrals" type="number">
+  Number of referrals required for members to receive this role
+  
+  **Usage:**
+  - Tracks how many users a member has referred to the server
+  - Role is automatically assigned when threshold is reached
+  - Encourages server growth through referral rewards
+  
+  **Example:** Set to `5` to require 5 successful referrals
+</ResponseField>
+
+### Automation Settings
+
+<ResponseField name="autoAssignable" type="boolean" default="false">
+  When enabled, this role is automatically assigned to new members when they join
+  
+  **Usage:**
+  - Common for default member roles
+  - Applies immediately on join
+  - Can have multiple auto-assignable roles
+</ResponseField>
+
+<ResponseField name="selfAssignable" type="boolean" default="false">
+  When enabled, members can assign/remove this role themselves using commands
+  
+  **Usage:**
+  - Used for opt-in roles (notifications, game roles, etc.)
+  - Members use `/role add` and `/role remove` commands
+  - Popular for color roles and interest groups
+</ResponseField>
+
+<ResponseField name="bots" type="boolean" default="false">
+  When enabled, this role is specifically for bot accounts
+  
+  **Usage:**
+  - Automatically assigned to bots when they join
+  - Helps distinguish bots from regular members
+  - Useful for bot-specific permissions
+</ResponseField>
+
+## Example Document
+
+```json
+{
+  "_id": "267035805641179137",
+  "guild": "267022940967665664",
+  "description": "Elite members who reached level 50",
+  "emoji": "👑",
+  "level": 50,
+  "price": null,
+  "invite": null,
+  "referrals": null,
+  "autoAssignable": false,
+  "selfAssignable": false,
+  "bots": false
+}
+```
+
+## Usage Examples
+
+<CodeGroup>
+
+```typescript TypeScript (Mongoose)
+import RoleModel, { Role } from './models/Role';
+
+// Create a level-based role reward
+await RoleModel.create({
+  _id: '267035805641179137',
+  guild: '267022940967665664',
+  description: 'Reached level 25',
+  emoji: '⭐',
+  level: 25
+});
+
+// Create a purchasable role
+await RoleModel.create({
+  _id: '123456789012345678',
+  guild: '267022940967665664',
+  description: 'VIP access and perks',
+  emoji: '💎',
+  price: 10000
+});
+
+// Create a self-assignable role
+await RoleModel.create({
+  _id: '234567890123456789',
+  guild: '267022940967665664',
+  description: 'Notification role for announcements',
+  emoji: '🔔',
+  selfAssignable: true
+});
+
+// Find role by level requirement
+const levelRole = await RoleModel.findOne({
+  guild: '267022940967665664',
+  level: 25
+});
+```
+
+```javascript JavaScript (Mongoose)
+const RoleModel = require('./models/Role').default;
+
+// Get all self-assignable roles in a guild
+const selfRoles = await RoleModel.find({
+  guild: '267022940967665664',
+  selfAssignable: true
+});
+
+console.log(`${selfRoles.length} self-assignable roles available`);
+
+// Get all auto-assignable roles
+const autoRoles = await RoleModel.find({
+  guild: '267022940967665664',
+  autoAssignable: true
+});
+
+// Check which role a member should get based on level
+const memberLevel = 30;
+const eligibleRoles = await RoleModel.find({
+  guild: '267022940967665664',
+  level: { $lte: memberLevel }
+}).sort({ level: -1 });
+
+console.log('Member is eligible for:', eligibleRoles);
+```
+
+```javascript MongoDB Query
+// Find all purchasable roles
+db.roles.find({
+  guild: "267022940967665664",
+  price: { $exists: true, $ne: null }
+})
+
+// Find level-based roles sorted by level
+db.roles.find({
+  guild: "267022940967665664",
+  level: { $exists: true }
+}).sort({ level: 1 })
+
+// Get all roles with referral requirements
+db.roles.find({
+  guild: "267022940967665664",
+  referrals: { $exists: true, $gt: 0 }
+})
+
+// Find bot roles
+db.roles.find({
+  guild: "267022940967665664",
+  bots: true
+})
+
+// Update role price
+db.roles.updateOne(
+  { _id: "267035805641179137" },
+  { $set: { price: 15000 } }
+)
+```
+
+</CodeGroup>
+
+## Common Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Level Rewards" icon="trophy">
+    Automatically assign roles when members reach specific levels
+    ```typescript
+    { level: 10, emoji: "🥉" }
+    { level: 25, emoji: "🥈" }
+    { level: 50, emoji: "🥇" }
+    ```
+  </Card>
+  
+  <Card title="Purchasable Perks" icon="coins">
+    Let members buy special roles with server currency
+    ```typescript
+    { price: 5000, description: "VIP" }
+    { price: 25000, description: "Premium" }
+    ```
+  </Card>
+  
+  <Card title="Self-Service" icon="hand">
+    Allow members to assign themselves opt-in roles
+    ```typescript
+    { selfAssignable: true, emoji: "🔔" }
+    { selfAssignable: true, emoji: "🎮" }
+    ```
+  </Card>
+  
+  <Card title="New Member" icon="user-plus">
+    Auto-assign roles to new members on join
+    ```typescript
+    { autoAssignable: true, description: "Member" }
+    ```
+  </Card>
+</CardGroup>
+
+## Role Assignment Logic
+
+### Level-Based Assignment
+
+```typescript
+import RoleModel from './models/Role';
+import MemberModel from './models/Member';
+
+async function checkLevelRoles(userId: string, guildId: string) {
+  const member = await MemberModel.findOne({ user: userId, guild: guildId });
+  
+  // Find all level roles the member is eligible for
+  const eligibleRoles = await RoleModel.find({
+    guild: guildId,
+    level: { $exists: true, $lte: member.level }
+  });
+  
+  // Assign roles to the Discord member
+  for (const role of eligibleRoles) {
+    await discordMember.roles.add(role._id);
+  }
+}
+```
+
+### Purchase Validation
+
+```typescript
+async function purchaseRole(userId: string, guildId: string, roleId: string) {
+  const role = await RoleModel.findById(roleId);
+  const member = await MemberModel.findOne({ user: userId, guild: guildId });
+  
+  if (!role.price) {
+    throw new Error('This role is not purchasable');
+  }
+  
+  if (member.balance < role.price) {
+    throw new Error(`Insufficient balance. Need ${role.price}, have ${member.balance}`);
+  }
+  
+  // Deduct price and assign role
+  member.balance -= role.price;
+  await member.save();
+  
+  await discordMember.roles.add(roleId);
+}
+```
+
+### Auto-Assignment on Join
+
+```typescript
+import RoleModel from './models/Role';
+
+// When a new member joins
+async function onMemberJoin(member: GuildMember) {
+  // Get all auto-assignable roles
+  const autoRoles = await RoleModel.find({
+    guild: member.guild.id,
+    autoAssignable: true
+  });
+  
+  // Assign all auto roles
+  const roleIds = autoRoles.map(role => role._id);
+  await member.roles.add(roleIds);
+  
+  // If member is a bot, also add bot roles
+  if (member.user.bot) {
+    const botRoles = await RoleModel.find({
+      guild: member.guild.id,
+      bots: true
+    });
+    
+    const botRoleIds = botRoles.map(role => role._id);
+    await member.roles.add(botRoleIds);
+  }
+}
+```
+
+## Configuration Examples
+
+<AccordionGroup>
+  <Accordion title="Tiered Level Roles">
+    ```typescript
+    // Bronze tier - Level 10
+    await RoleModel.create({
+      _id: '111111111111111111',
+      guild: '267022940967665664',
+      description: 'Bronze Tier - Active Member',
+      emoji: '🥉',
+      level: 10
+    });
+    
+    // Silver tier - Level 25
+    await RoleModel.create({
+      _id: '222222222222222222',
+      guild: '267022940967665664',
+      description: 'Silver Tier - Veteran',
+      emoji: '🥈',
+      level: 25
+    });
+    
+    // Gold tier - Level 50
+    await RoleModel.create({
+      _id: '333333333333333333',
+      guild: '267022940967665664',
+      description: 'Gold Tier - Elite',
+      emoji: '🥇',
+      level: 50
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Notification Roles">
+    ```typescript
+    // Announcement notifications
+    await RoleModel.create({
+      _id: '444444444444444444',
+      guild: '267022940967665664',
+      description: 'Get pinged for server announcements',
+      emoji: '📢',
+      selfAssignable: true
+    });
+    
+    // Event notifications
+    await RoleModel.create({
+      _id: '555555555555555555',
+      guild: '267022940967665664',
+      description: 'Get pinged for community events',
+      emoji: '🎉',
+      selfAssignable: true
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Premium Roles">
+    ```typescript
+    // Purchasable VIP role
+    await RoleModel.create({
+      _id: '666666666666666666',
+      guild: '267022940967665664',
+      description: 'VIP perks and exclusive access',
+      emoji: '⭐',
+      price: 10000
+    });
+    
+    // Referral reward role
+    await RoleModel.create({
+      _id: '777777777777777777',
+      guild: '267022940967665664',
+      description: 'Invite 10 friends to unlock',
+      emoji: '🤝',
+      referrals: 10
+    });
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Models
+
+- [Guild Model](/api/models/guild) - Server configuration
+- [Member Model](/api/models/member) - Member profiles and levels
+
+<Info>
+Role documents are manually created by server administrators or moderators using Bastion commands. They do not auto-create when Discord roles are created.
+</Info>
+
+<Warning>
+The role ID (`_id`) must exactly match the Discord role ID. If they don't match, automatic role assignment will fail.
+</Warning>

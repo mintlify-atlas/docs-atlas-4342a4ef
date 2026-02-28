@@ -1,0 +1,511 @@
+---
+title: Role Commands
+description: Manage server roles with create, delete, update, info, config, and levels commands
+---
+
+Manage your server's roles with Bastion's comprehensive role management commands. Create new roles, modify existing ones, view role information, configure role settings, and set up level-based role assignment.
+
+## Overview
+
+The `/role` command group provides complete role management functionality:
+
+- Create and delete roles with custom properties
+- Update role names, colors, and settings
+- View detailed role information and permissions
+- Configure role descriptions and emojis
+- Set up automatic level-based role assignment
+
+<Note>
+Most role commands require both the user and Bastion to have the **Manage Roles** permission. Bastion can only manage roles positioned below its highest role in the hierarchy.
+</Note>
+
+## Create Role
+
+Create a new role in your server with customizable properties.
+
+```bash
+/role create name:<name> [options]
+```
+
+### Parameters
+
+<ParamField path="name" type="string" required>
+  The name of the new role.
+</ParamField>
+
+<ParamField path="color" type="string">
+  The color for the role in HEX code format (e.g., `#FF5733`).
+</ParamField>
+
+<ParamField path="icon" type="string">
+  The icon for the role (Image URL or Emoji). Requires Server Boost Level 2+.
+</ParamField>
+
+<ParamField path="hoist" type="boolean">
+  Display members with this role separately from others in the member list.
+</ParamField>
+
+<ParamField path="mentionable" type="boolean">
+  Allow this role to be mentioned by members.
+</ParamField>
+
+<ParamField path="reason" type="string">
+  The reason for creating the role (appears in audit log).
+</ParamField>
+
+### Examples
+
+<Tabs>
+  <Tab title="Basic Role">
+    ```bash
+    /role create name:Member
+    ```
+    Creates a basic role named "Member" with default settings.
+  </Tab>
+  
+  <Tab title="Colored Role">
+    ```bash
+    /role create name:VIP color:#FFD700 hoist:True
+    ```
+    Creates a gold-colored VIP role displayed separately in the member list.
+  </Tab>
+  
+  <Tab title="Mentionable Role">
+    ```bash
+    /role create name:Event Team color:#5865F2 mentionable:True reason:Creating event management team
+    ```
+    Creates a mentionable role for the event team.
+  </Tab>
+  
+  <Tab title="Full Configuration">
+    ```bash
+    /role create name:Moderator color:#43B581 hoist:True mentionable:True reason:Adding moderation team
+    ```
+    Creates a fully configured moderator role.
+  </Tab>
+</Tabs>
+
+<Note>
+Role icons are only available for servers with Boost Level 2 or higher. The new role will be positioned just below Bastion's highest role.
+</Note>
+
+## Delete Role
+
+Delete a specified role from the server.
+
+```bash
+/role delete role:<role> [reason:<reason>]
+```
+
+### Parameters
+
+<ParamField path="role" type="role" required>
+  The role you want to delete.
+</ParamField>
+
+<ParamField path="reason" type="string">
+  The reason for deleting the role (appears in audit log).
+</ParamField>
+
+### Examples
+
+```bash
+/role delete role:@OldRole reason:No longer needed
+```
+Deletes the specified role with a logged reason.
+
+<Warning>
+Role deletion is permanent and cannot be undone. All members with this role will lose it, and any permissions granted by the role will be removed. The @everyone role cannot be deleted.
+</Warning>
+
+## Update Role
+
+Update properties of an existing role.
+
+```bash
+/role update role:<role> [options]
+```
+
+### Parameters
+
+<ParamField path="role" type="role" required>
+  The role you want to update.
+</ParamField>
+
+<ParamField path="name" type="string">
+  The new name for the role.
+</ParamField>
+
+<ParamField path="color" type="string">
+  The new color for the role in HEX code format (e.g., `#FF5733`).
+</ParamField>
+
+<ParamField path="icon" type="string">
+  The new icon for the role (Image URL or Emoji).
+</ParamField>
+
+<ParamField path="hoist" type="boolean">
+  Update whether members are displayed separately.
+</ParamField>
+
+<ParamField path="mentionable" type="boolean">
+  Update whether the role can be mentioned.
+</ParamField>
+
+<ParamField path="reason" type="string">
+  The reason for updating the role (appears in audit log).
+</ParamField>
+
+### Examples
+
+<Tabs>
+  <Tab title="Rename Role">
+    ```bash
+    /role update role:@Member name:Verified Member reason:Renaming for clarity
+    ```
+    Updates the role's name.
+  </Tab>
+  
+  <Tab title="Change Color">
+    ```bash
+    /role update role:@VIP color:#9B59B6
+    ```
+    Changes the role's color to purple.
+  </Tab>
+  
+  <Tab title="Toggle Settings">
+    ```bash
+    /role update role:@Staff hoist:False mentionable:True
+    ```
+    Updates display and mention settings.
+  </Tab>
+  
+  <Tab title="Multiple Updates">
+    ```bash
+    /role update role:@Moderator name:Senior Moderator color:#E74C3C hoist:True
+    ```
+    Updates multiple properties at once.
+  </Tab>
+</Tabs>
+
+<Note>
+Only the properties you specify will be updated. Unspecified properties remain unchanged. The @everyone role cannot be edited.
+</Note>
+
+## Role Info
+
+Display detailed information about a role.
+
+```bash
+/role info role:<role>
+```
+
+### Parameters
+
+<ParamField path="role" type="role" required>
+  The role whose information you want to display.
+</ParamField>
+
+### Examples
+
+```bash
+/role info role:@Moderator
+```
+Displays comprehensive information about the Moderator role.
+
+### Information Displayed
+
+The role info command shows:
+
+- **Role Name** - The current name of the role
+- **Role Type** - Whether it's a managed role (e.g., bot role, integration role)
+- **Description** - Custom description set via `/role config` (if any)
+- **Color** - The role's color (displayed in the embed color)
+- **Position** - The role's position in the hierarchy
+- **Members** - Number of members who have this role
+- **Created** - When the role was created (timestamp)
+- **Mentionable** - Whether the role can be mentioned
+- **Hoisted** - Whether members are displayed separately
+- **Emoji** - Custom emoji associated with the role (if any)
+- **Permissions** - List of all permissions granted by the role
+- **Icon** - Role icon image (if set)
+- **Role ID** - The unique identifier for the role
+
+<Note>
+This command does not require any special permissions and can be used by any member.
+</Note>
+
+## Role Config
+
+Configure the description and emoji for a role.
+
+```bash
+/role config role:<role> [emoji:<emoji>] [description:<description>]
+```
+
+### Parameters
+
+<ParamField path="role" type="role" required>
+  The role you want to configure.
+</ParamField>
+
+<ParamField path="emoji" type="string">
+  The emoji to set as the role emoji. Can be a Unicode emoji or a custom emoji from your server.
+</ParamField>
+
+<ParamField path="description" type="string">
+  A description for the role (maximum 100 characters).
+</ParamField>
+
+### Examples
+
+<Tabs>
+  <Tab title="Set Emoji">
+    ```bash
+    /role config role:@VIP emoji:⭐
+    ```
+    Sets a star emoji for the VIP role.
+  </Tab>
+  
+  <Tab title="Set Description">
+    ```bash
+    /role config role:@Moderator description:Responsible for maintaining server order and helping members
+    ```
+    Adds a description to the Moderator role.
+  </Tab>
+  
+  <Tab title="Custom Emoji">
+    ```bash
+    /role config role:@Developer emoji::code:
+    ```
+    Sets a custom server emoji for the Developer role.
+  </Tab>
+  
+  <Tab title="Remove Config">
+    ```bash
+    /role config role:@Member
+    ```
+    Removes the description and emoji from the role (when no options are provided).
+  </Tab>
+</Tabs>
+
+<Note>
+For servers with Boost Level 2+, custom emojis will also be set as role icons. Custom emojis must be from your server. Description is limited to 100 characters.
+</Note>
+
+## Role Levels
+
+Configure automatic role assignment based on member levels.
+
+```bash
+/role levels [role:<role>] [level:<level>] [remove:<level>]
+```
+
+### Parameters
+
+<ParamField path="role" type="role">
+  The role that should be assigned to users.
+</ParamField>
+
+<ParamField path="level" type="integer">
+  The level at which the role should be assigned (minimum: 0).
+</ParamField>
+
+<ParamField path="remove" type="integer">
+  Remove all role assignments for the specified level (minimum: 0).
+</ParamField>
+
+### Command Variants
+
+#### Set Level Role
+
+Assign a role to a specific level:
+```bash
+/role levels role:@Active Member level:5
+```
+
+Members who reach level 5 will automatically receive the Active Member role.
+
+#### Check Role's Level
+
+Check what level a role is assigned to:
+```bash
+/role levels role:@Active Member
+```
+
+Shows the level assignment for the specified role.
+
+#### Check Level's Roles
+
+View all roles assigned to a specific level:
+```bash
+/role levels level:10
+```
+
+Lists all roles that are assigned to level 10.
+
+#### Remove Level Assignment
+
+Remove all role assignments from a level:
+```bash
+/role levels remove:5
+```
+
+Unassigns all roles from level 5.
+
+#### View All Level Roles
+
+See all configured level roles:
+```bash
+/role levels
+```
+
+Displays a summary of all level-based role configurations.
+
+### Examples
+
+<Tabs>
+  <Tab title="Simple Setup">
+    ```bash
+    /role levels role:@Regular level:3
+    /role levels role:@Veteran level:10
+    /role levels role:@Legend level:20
+    ```
+    Sets up a progression system with three role tiers.
+  </Tab>
+  
+  <Tab title="Multiple Roles Per Level">
+    ```bash
+    /role levels role:@Active level:5
+    /role levels role:@Contributor level:5
+    ```
+    Assigns multiple roles at the same level.
+  </Tab>
+  
+  <Tab title="Checking Configuration">
+    ```bash
+    # Check a specific role
+    /role levels role:@Veteran
+    
+    # Check a specific level
+    /role levels level:10
+    
+    # View all level roles
+    /role levels
+    ```
+  </Tab>
+  
+  <Tab title="Removing Assignments">
+    ```bash
+    # Remove all roles from level 5
+    /role levels remove:5
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+Level-based role assignment works with Bastion's leveling system. Premium tiers may have different limits on the number of role levels and roles per level.
+</Note>
+
+## Required Permissions
+
+### User Permissions
+
+- **Manage Roles** - Required for create, delete, update, config, and levels commands
+- No special permissions needed for info command
+
+### Bot Permissions
+
+- **Manage Roles** - Required for create, delete, update, and levels commands
+- No special permissions needed for info and config commands
+
+<Warning>
+Bastion cannot manage roles that are positioned higher than its highest role. Ensure Bastion's role is positioned appropriately in your server's role hierarchy. The @everyone role cannot be deleted or edited.
+</Warning>
+
+## Best Practices
+
+1. **Role Hierarchy** - Position Bastion's role above any roles it needs to manage
+2. **Descriptive Names** - Use clear, descriptive names for roles
+3. **Color Coding** - Use colors to visually distinguish different role types
+4. **Hoist Strategically** - Only hoist important roles to avoid cluttering the member list
+5. **Permission Planning** - Carefully consider which permissions each role should have
+6. **Log Reasons** - Always provide reasons for role changes for better audit trail
+7. **Level Progression** - Design a balanced progression system for level roles
+8. **Custom Emojis** - Use role emojis to make roles more visually distinctive
+
+## Common Use Cases
+
+<Tabs>
+  <Tab title="Server Setup">
+    Create a complete role structure for a new server:
+    
+    ```bash
+    # Staff roles
+    /role create name:Owner color:#E74C3C hoist:True
+    /role create name:Admin color:#E67E22 hoist:True mentionable:True
+    /role create name:Moderator color:#F1C40F hoist:True mentionable:True
+    
+    # Community roles
+    /role create name:VIP color:#9B59B6 hoist:True
+    /role create name:Member color:#3498DB
+    /role create name:New Member color:#95A5A6
+    ```
+  </Tab>
+  
+  <Tab title="Level System">
+    Set up a progression system with level roles:
+    
+    ```bash
+    /role create name:Newcomer color:#95A5A6
+    /role levels role:@Newcomer level:0
+    
+    /role create name:Regular color:#3498DB
+    /role levels role:@Regular level:5
+    
+    /role create name:Active color:#9B59B6
+    /role levels role:@Active level:10
+    
+    /role create name:Veteran color:#E67E22
+    /role levels role:@Veteran level:20
+    
+    /role create name:Legend color:#E74C3C hoist:True
+    /role levels role:@Legend level:50
+    ```
+  </Tab>
+  
+  <Tab title="Role Rebranding">
+    Update existing roles with new branding:
+    
+    ```bash
+    /role update role:@Mod name:Moderator color:#43B581
+    /role config role:@Moderator emoji:🛡️ description:Server moderators who ensure community guidelines are followed
+    
+    /role update role:@Helper name:Support Team color:#5865F2
+    /role config role:@Support Team emoji:💬 description:Helpful members who assist others with questions
+    ```
+  </Tab>
+  
+  <Tab title="Event Roles">
+    Create temporary roles for events:
+    
+    ```bash
+    /role create name:Tournament Participant color:#F1C40F mentionable:True reason:Weekly tournament
+    /role create name:Tournament Winner color:#FFD700 hoist:True reason:Tournament prize role
+    ```
+    
+    After the event:
+    ```bash
+    /role delete role:@Tournament Participant reason:Event concluded
+    ```
+  </Tab>
+</Tabs>
+
+## Premium Limits
+
+Bastion Premium tiers may have different limits for level roles:
+
+- **Role Levels** - The number of different levels that can have role assignments
+- **Roles Per Level** - How many roles can be assigned to a single level
+
+Check your current configuration with `/role levels` to see how many level roles you have configured.

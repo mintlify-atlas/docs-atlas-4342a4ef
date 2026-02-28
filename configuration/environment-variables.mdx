@@ -1,0 +1,380 @@
+---
+title: Environment Variables
+description: Configure Bastion using environment variables with .env file support for flexible deployment options
+---
+
+Bastion supports configuration through environment variables, which can override settings from the `settings.yaml` file. This is particularly useful for containerized deployments, CI/CD pipelines, and keeping sensitive credentials out of version control.
+
+## Setup
+
+Bastion uses [dotenv](https://www.npmjs.com/package/dotenv) to load environment variables from a `.env` file in the root directory.
+
+### Creating the .env File
+
+1. Copy the example file:
+
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` with your configuration:
+
+```bash
+nano .env
+# or
+vim .env
+```
+
+<Warning>
+  **Never commit your `.env` file to version control.** It contains sensitive credentials like your bot token and API keys. The `.env` file should be listed in your `.gitignore`.
+</Warning>
+
+## Environment Variables Reference
+
+### Bot Configuration
+
+<ParamField path="BOT_ID" type="string">
+  Discord bot application Client ID.
+  
+  Overrides the `id` field in `settings.yaml`.
+  
+  ```bash
+  BOT_ID=123456789012345678
+  ```
+  
+  Get this from the [Discord Developer Portal](https://discord.com/developers/applications).
+</ParamField>
+
+<ParamField path="BOT_TOKEN" type="string">
+  Discord bot token for authentication.
+  
+  Overrides the `token` field in `settings.yaml`.
+  
+  ```bash
+  BOT_TOKEN=your-bot-token-here
+  ```
+  
+  <Warning>
+    This is your bot's password. Never share it publicly or commit it to version control.
+  </Warning>
+  
+  Get this from the [Discord Developer Portal](https://discord.com/developers/applications) under the "Bot" section.
+</ParamField>
+
+<ParamField path="OWNER_ID" type="string">
+  Discord User ID of an additional bot owner.
+  
+  This adds to the `owners` array in `settings.yaml` rather than replacing it.
+  
+  ```bash
+  OWNER_ID=987654321098765432
+  ```
+  
+  <Info>
+    To get your User ID, enable Developer Mode in Discord (User Settings > Advanced), then right-click your username and select "Copy User ID".
+  </Info>
+</ParamField>
+
+### Database Configuration
+
+<ParamField path="MONGO_URI" type="string">
+  MongoDB connection URI.
+  
+  Overrides the `mongoURI` field in `settings.yaml`.
+  
+  ```bash
+  MONGO_URI=mongodb://127.0.0.1:27017/bastion
+  ```
+  
+  <Note>
+    **Docker Users**: If running MongoDB locally with Bastion in Docker, use `host.docker.internal` instead of `127.0.0.1`:
+    
+    ```bash
+    MONGO_URI=mongodb://host.docker.internal:27017/bastion
+    ```
+  </Note>
+  
+  For MongoDB Atlas or remote databases:
+  
+  ```bash
+  MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/bastion
+  ```
+  
+  See [Database Configuration](/configuration/database) for detailed setup instructions.
+</ParamField>
+
+### Bot Behavior
+
+<ParamField path="BASTION_MUSIC_ACTIVITY" type="boolean" default="TRUE">
+  Enable automatic activity updates showing the currently playing track.
+  
+  Overrides the `musicActivity` field in `settings.yaml`.
+  
+  ```bash
+  BASTION_MUSIC_ACTIVITY=TRUE
+  # or
+  BASTION_MUSIC_ACTIVITY=FALSE
+  ```
+  
+  <Info>
+    Values are case-insensitive. Use `TRUE`/`FALSE`, `true`/`false`, or any case variation.
+  </Info>
+  
+  <Warning>
+    Disable this if music is played on multiple servers simultaneously to prevent rapid activity changes.
+  </Warning>
+</ParamField>
+
+<ParamField path="BASTION_RELAY_DMS" type="boolean | string" default="FALSE">
+  Relay direct messages to the bot owner or via webhook.
+  
+  Overrides the `relayDirectMessages` field in `settings.yaml`.
+  
+  ```bash
+  # Disable DM relaying
+  BASTION_RELAY_DMS=FALSE
+  
+  # Relay to bot owner
+  BASTION_RELAY_DMS=TRUE
+  
+  # Relay via Discord webhook
+  BASTION_RELAY_DMS=https://discord.com/api/webhooks/...
+  ```
+  
+  <Info>
+    When set to a URL string, it should be a valid Discord webhook URL for relaying messages.
+  </Info>
+</ParamField>
+
+<ParamField path="UNSAFE_MODE" type="boolean" default="FALSE">
+  Enable unsafe commands like `exec` and `eval`.
+  
+  Overrides the `unsafeMode` field in `settings.yaml`.
+  
+  ```bash
+  UNSAFE_MODE=FALSE
+  # or for development
+  UNSAFE_MODE=TRUE
+  ```
+  
+  <Warning>
+    **Security Risk**: Only enable for development or debugging. Unsafe commands can execute arbitrary code and system commands.
+  </Warning>
+</ParamField>
+
+### API Server
+
+<ParamField path="BASTION_API_PORT" type="number">
+  Port number for the Bastion API Server.
+  
+  Overrides the `port` field in `settings.yaml`.
+  
+  ```bash
+  BASTION_API_PORT=8377
+  ```
+  
+  <Info>
+    The API server requires both `BASTION_API_PORT` (or `PORT`) and `BASTION_API_AUTH` to be set, otherwise it won't start.
+  </Info>
+</ParamField>
+
+<ParamField path="PORT" type="number">
+  Alternative port variable for the Bastion API Server.
+  
+  Also overrides the `port` field in `settings.yaml`. `BASTION_API_PORT` takes precedence if both are set.
+  
+  ```bash
+  PORT=8377
+  ```
+  
+  <Info>
+    This is useful for platform-as-a-service deployments like Heroku that automatically set the `PORT` variable.
+  </Info>
+</ParamField>
+
+<ParamField path="BASTION_API_AUTH" type="string">
+  Authentication token for the Bastion API Server.
+  
+  Overrides the `auth` field in `settings.yaml`.
+  
+  ```bash
+  BASTION_API_AUTH=your-secure-auth-token-here
+  ```
+  
+  <Warning>
+    Use a strong, random token for production deployments. This token is required to access the API server.
+  </Warning>
+</ParamField>
+
+## Example .env File
+
+```bash .env
+# Bot Credentials
+BOT_ID=123456789012345678
+BOT_TOKEN=your-bot-token-here
+OWNER_ID=987654321098765432
+
+# Database
+MONGO_URI=mongodb://127.0.0.1:27017/bastion
+
+# Bot Behavior
+UNSAFE_MODE=FALSE
+BASTION_MUSIC_ACTIVITY=TRUE
+BASTION_RELAY_DMS=FALSE
+
+# API Server
+BASTION_API_PORT=8377
+BASTION_API_AUTH=your-secure-auth-token
+```
+
+## Priority Order
+
+When the same setting is configured in multiple places, Bastion uses the following priority order (highest to lowest):
+
+1. **Environment Variables** - Highest priority
+2. **settings.yaml** - Fallback if environment variable is not set
+3. **Default Values** - Used if neither environment variable nor settings.yaml is configured
+
+### Example Priority
+
+If you have:
+
+```yaml settings.yaml
+port: 8377
+```
+
+And:
+
+```bash .env
+BASTION_API_PORT=3000
+```
+
+Bastion will use port **3000** (from the environment variable).
+
+## Docker Deployment
+
+When running Bastion in Docker, you can pass environment variables in several ways:
+
+### Using .env File
+
+```bash
+docker run --env-file .env bastion
+```
+
+### Using -e Flag
+
+```bash
+docker run \
+  -e BOT_TOKEN=your-token \
+  -e MONGO_URI=mongodb://host.docker.internal:27017/bastion \
+  bastion
+```
+
+### Using docker-compose.yml
+
+```yaml docker-compose.yml
+version: '3.8'
+services:
+  bastion:
+    image: bastion
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - MONGO_URI=mongodb://mongodb:27017/bastion
+    env_file:
+      - .env
+  
+  mongodb:
+    image: mongo:latest
+    volumes:
+      - mongodb-data:/data/db
+
+volumes:
+  mongodb-data:
+```
+
+<Note>
+  For Docker deployments with local MongoDB, remember to use `host.docker.internal` or the container service name instead of `127.0.0.1`.
+</Note>
+
+## Security Best Practices
+
+<Warning>
+  Follow these security practices to protect your bot and credentials:
+</Warning>
+
+1. **Never commit `.env` to version control**
+   - Ensure `.env` is in your `.gitignore`
+   - Use `.env.example` as a template without real credentials
+
+2. **Use strong, unique tokens**
+   - Generate random tokens for `BASTION_API_AUTH`
+   - Rotate credentials periodically
+
+3. **Restrict file permissions**
+   ```bash
+   chmod 600 .env
+   ```
+
+4. **Use environment-specific files**
+   - `.env.development`
+   - `.env.production`
+   - Load with `dotenv -e .env.production`
+
+5. **Consider secret management services**
+   - AWS Secrets Manager
+   - HashiCorp Vault
+   - Docker Secrets
+   - Kubernetes Secrets
+
+## Troubleshooting
+
+### Environment Variables Not Loading
+
+<CodeGroup>
+```bash "Check if .env exists"
+ls -la .env
+```
+
+```bash "Verify file permissions"
+ls -l .env
+# Should show read permissions for the user running Bastion
+```
+
+```bash "Test environment variable"
+echo $BOT_TOKEN
+# Should output your token (in your shell)
+```
+</CodeGroup>
+
+<Info>
+  Bastion loads `.env` automatically using the `dotenv` package. You don't need to manually export variables.
+</Info>
+
+### Docker Container Can't Connect to MongoDB
+
+If running MongoDB locally and Bastion in Docker:
+
+```bash .env
+# Wrong - won't work in Docker
+MONGO_URI=mongodb://127.0.0.1:27017/bastion
+
+# Correct - works from Docker container
+MONGO_URI=mongodb://host.docker.internal:27017/bastion
+```
+
+### API Server Not Starting
+
+Ensure both port and auth are configured:
+
+```bash .env
+BASTION_API_PORT=8377
+BASTION_API_AUTH=your-token-here
+```
+
+If either is missing, the API server will not start.
+
+## See Also
+
+- [Settings Configuration](/configuration/settings) - Complete settings.yaml reference
+- [Database Configuration](/configuration/database) - MongoDB connection setup
+- [API Keys](/configuration/api-keys) - Third-party service API keys

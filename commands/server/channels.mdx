@@ -1,0 +1,327 @@
+---
+title: Channel Commands
+description: Manage server channels with create, delete, update, and info commands
+---
+
+Manage your server's channels with Bastion's channel management commands. Create new channels, modify existing ones, view channel information, and delete channels when needed.
+
+## Overview
+
+The `/channel` command group provides complete channel management functionality:
+
+- Create text, voice, announcement, stage, and category channels
+- Update channel properties like name, topic, and settings
+- View detailed information about any channel
+- Delete channels with optional reason logging
+
+<Note>
+All channel commands require both the user and Bastion to have the **Manage Channels** permission (except for `/channel info`).
+</Note>
+
+## Create Channel
+
+Create a new channel in your server with customizable settings.
+
+```bash
+/channel create name:<name> type:<type> [options]
+```
+
+### Parameters
+
+<ParamField path="name" type="string" required>
+  The name of the new channel.
+</ParamField>
+
+<ParamField path="type" type="integer" required>
+  The type of channel to create:
+  - **Text** - Standard text channel
+  - **Voice** - Voice channel for audio communication
+  - **Announcement** - Announcement channel for server updates
+  - **Stage** - Stage channel for hosted events
+  - **Category** - Category to organize channels
+</ParamField>
+
+<ParamField path="topic" type="string">
+  The topic or description for the new channel.
+</ParamField>
+
+<ParamField path="limit" type="integer">
+  User limit for voice channels (1-99). Only applicable to voice and stage channels.
+</ParamField>
+
+<ParamField path="slowmode" type="integer">
+  Slowmode interval in seconds (0-21600). Limits how frequently users can send messages.
+</ParamField>
+
+<ParamField path="nsfw" type="boolean">
+  Mark the channel as age-restricted (NSFW).
+</ParamField>
+
+<ParamField path="reason" type="string">
+  The reason for creating the channel (appears in audit log).
+</ParamField>
+
+### Examples
+
+<Tabs>
+  <Tab title="Text Channel">
+    ```bash
+    /channel create name:general-chat type:Text topic:General discussion for all members
+    ```
+    Creates a text channel named "general-chat" with a topic.
+  </Tab>
+  
+  <Tab title="Voice Channel">
+    ```bash
+    /channel create name:Gaming type:Voice limit:10
+    ```
+    Creates a voice channel with a 10-user limit.
+  </Tab>
+  
+  <Tab title="Announcement Channel">
+    ```bash
+    /channel create name:announcements type:Announcement topic:Important server updates slowmode:3600
+    ```
+    Creates an announcement channel with 1-hour slowmode.
+  </Tab>
+  
+  <Tab title="Category">
+    ```bash
+    /channel create name:Community type:Category reason:Organizing community channels
+    ```
+    Creates a new category for organizing channels.
+  </Tab>
+</Tabs>
+
+<Note>
+New channels (except categories) are created in the same category as the channel where the command is executed. The bitrate for voice channels is automatically set based on your server's boost level.
+</Note>
+
+## Delete Channel
+
+Delete the current channel or a specified channel.
+
+```bash
+/channel delete [channel:<channel>] [reason:<reason>]
+```
+
+### Parameters
+
+<ParamField path="channel" type="channel">
+  The channel to delete. If not specified, deletes the current channel.
+</ParamField>
+
+<ParamField path="reason" type="string">
+  The reason for deleting the channel (appears in audit log).
+</ParamField>
+
+### Examples
+
+<Tabs>
+  <Tab title="Delete Current Channel">
+    ```bash
+    /channel delete reason:No longer needed
+    ```
+    Deletes the channel where the command was executed.
+  </Tab>
+  
+  <Tab title="Delete Specific Channel">
+    ```bash
+    /channel delete channel:#old-announcements reason:Consolidating announcement channels
+    ```
+    Deletes a specific channel with a reason.
+  </Tab>
+</Tabs>
+
+<Warning>
+Channel deletion is permanent and cannot be undone. All messages and settings in the channel will be lost.
+</Warning>
+
+## Update Channel
+
+Update properties of the current or specified channel.
+
+```bash
+/channel update [channel:<channel>] [options]
+```
+
+### Parameters
+
+<ParamField path="channel" type="channel">
+  The channel to update. If not specified, updates the current channel.
+</ParamField>
+
+<ParamField path="name" type="string">
+  The new name for the channel.
+</ParamField>
+
+<ParamField path="topic" type="string">
+  The new topic or description for the channel.
+</ParamField>
+
+<ParamField path="limit" type="integer">
+  The new user limit for voice channels (1-99).
+</ParamField>
+
+<ParamField path="slowmode" type="integer">
+  The new slowmode interval in seconds (0-21600). Set to 0 to disable slowmode.
+</ParamField>
+
+<ParamField path="nsfw" type="boolean">
+  Update the NSFW status of the channel.
+</ParamField>
+
+<ParamField path="reason" type="string">
+  The reason for updating the channel (appears in audit log).
+</ParamField>
+
+### Examples
+
+<Tabs>
+  <Tab title="Rename Channel">
+    ```bash
+    /channel update name:new-general-chat reason:Rebranding channel names
+    ```
+    Updates the current channel's name.
+  </Tab>
+  
+  <Tab title="Update Topic">
+    ```bash
+    /channel update channel:#announcements topic:Official server announcements and updates
+    ```
+    Updates the topic of a specific channel.
+  </Tab>
+  
+  <Tab title="Enable Slowmode">
+    ```bash
+    /channel update slowmode:30 reason:Reducing spam
+    ```
+    Enables 30-second slowmode on the current channel.
+  </Tab>
+  
+  <Tab title="Multiple Updates">
+    ```bash
+    /channel update channel:#gaming-voice limit:25 name:Gaming Lounge
+    ```
+    Updates both the name and user limit of a voice channel.
+  </Tab>
+</Tabs>
+
+<Note>
+Only the properties you specify will be updated. Unspecified properties remain unchanged.
+</Note>
+
+## Channel Info
+
+Display detailed information about a channel.
+
+```bash
+/channel info [channel:<channel>]
+```
+
+### Parameters
+
+<ParamField path="channel" type="channel">
+  The channel to view information about. If not specified, shows info for the current channel.
+</ParamField>
+
+### Examples
+
+```bash
+/channel info
+```
+Shows information about the current channel.
+
+```bash
+/channel info channel:#announcements
+```
+Displays information about a specific channel.
+
+### Information Displayed
+
+The channel info command shows:
+
+- **Channel Name** - The current name of the channel
+- **Channel Type** - Text, Voice, Announcement, Stage, or Category
+- **Topic** - The channel's topic or description (if set)
+- **Category** - The parent category the channel belongs to
+- **Members** - Number of members who can access the channel
+- **Created** - When the channel was created (timestamp)
+- **Sync Status** - Whether permissions are synced with the category
+- **Channel ID** - The unique identifier for the channel
+
+<Note>
+This command does not require any special permissions and can be used by any member.
+</Note>
+
+## Required Permissions
+
+### User Permissions
+
+- **Manage Channels** - Required for create, delete, and update commands
+- No special permissions needed for info command
+
+### Bot Permissions
+
+- **Manage Channels** - Required for create, delete, and update commands
+- No special permissions needed for info command
+
+<Warning>
+Bastion cannot delete or modify channels that are positioned higher than its highest role. Ensure Bastion's role is positioned appropriately in your server's role hierarchy.
+</Warning>
+
+## Best Practices
+
+1. **Use Descriptive Names** - Give channels clear, descriptive names that indicate their purpose
+2. **Set Topics** - Add topics to help members understand what each channel is for
+3. **Organize with Categories** - Use categories to group related channels together
+4. **Log Reasons** - Always provide reasons for channel changes for better audit trail
+5. **Slowmode for Busy Channels** - Enable slowmode in high-traffic channels to reduce spam
+6. **NSFW Marking** - Properly mark channels with age-restricted content
+7. **Voice Limits** - Set user limits on voice channels to prevent overcrowding
+
+## Common Use Cases
+
+<Tabs>
+  <Tab title="Server Setup">
+    Create a complete channel structure for a new server:
+    
+    ```bash
+    # Create categories
+    /channel create name:Information type:Category
+    /channel create name:Community type:Category
+    /channel create name:Voice Channels type:Category
+    
+    # Create text channels
+    /channel create name:rules type:Text topic:Server rules and guidelines
+    /channel create name:general type:Text topic:General discussion
+    
+    # Create voice channels
+    /channel create name:General Voice type:Voice limit:10
+    ```
+  </Tab>
+  
+  <Tab title="Event Channels">
+    Set up temporary channels for events:
+    
+    ```bash
+    /channel create name:Tournament-Stage type:Stage reason:Weekly tournament
+    /channel create name:tournament-chat type:Text topic:Discuss the ongoing tournament
+    ```
+    
+    After the event:
+    ```bash
+    /channel delete channel:#tournament-chat reason:Event concluded
+    /channel delete channel:#Tournament-Stage reason:Event concluded
+    ```
+  </Tab>
+  
+  <Tab title="Channel Reorganization">
+    Rename and reorganize existing channels:
+    
+    ```bash
+    /channel update channel:#chat name:general-chat topic:General server discussion
+    /channel update channel:#voice-1 name:Chill Lounge limit:15
+    ```
+  </Tab>
+</Tabs>

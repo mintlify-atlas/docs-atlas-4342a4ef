@@ -1,0 +1,356 @@
+---
+title: "Guild Model"
+description: "Complete schema reference for Guild data model and configuration settings"
+---
+
+## Overview
+
+The Guild model represents server-specific configurations and feature settings for Bastion. Each Discord server (guild) has its own document in the MongoDB database with customizable options for moderation, gamification, music, and more.
+
+## Schema Definition
+
+<Note>
+The Guild model is defined in `src/models/Guild.ts` using Mongoose ODM for MongoDB.
+</Note>
+
+### Identification
+
+<ResponseField name="_id" type="string" required>
+  Discord guild (server) ID. This is the primary identifier.
+</ResponseField>
+
+<ResponseField name="id" type="string">
+  Alternative guild ID field (optional duplicate of `_id`)
+</ResponseField>
+
+### AI Chat Integration
+
+<ResponseField name="chat" type="boolean" default="false">
+  Enables AI chat functionality using configured AI providers (OpenAI, Gemini, or Anthropic)
+</ResponseField>
+
+### Greetings System
+
+<ResponseField name="greetingChannel" type="string">
+  Channel ID where greeting messages are sent when members join
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="greetingMessage" type="string">
+  Custom greeting message template. Supports variables for personalization.
+  
+  **Note:** String is trimmed before storage
+</ResponseField>
+
+<ResponseField name="greetingMessageTimeout" type="number">
+  Time in milliseconds before the greeting message is automatically deleted. Set to `0` for no timeout.
+</ResponseField>
+
+### Farewell System
+
+<ResponseField name="farewellChannel" type="string">
+  Channel ID where farewell messages are sent when members leave
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="farewellMessage" type="string">
+  Custom farewell message template
+  
+  **Note:** String is trimmed before storage
+</ResponseField>
+
+<ResponseField name="farewellMessageTimeout" type="number">
+  Time in milliseconds before the farewell message is automatically deleted
+</ResponseField>
+
+### Music System
+
+<ResponseField name="music" type="boolean" default="false">
+  Enables music playback functionality in the server
+</ResponseField>
+
+<ResponseField name="musicChannel" type="string">
+  Dedicated channel ID for music commands and playback controls
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="musicRole" type="string">
+  Role ID required to use music commands. Leave empty to allow all members.
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+### Gamification System
+
+<ResponseField name="gamification" type="boolean" default="false">
+  Enables XP and leveling system for member engagement
+</ResponseField>
+
+<ResponseField name="gamificationMessages" type="boolean" default="false">
+  Shows level-up messages when members gain levels
+</ResponseField>
+
+<ResponseField name="gamificationChannel" type="string">
+  Channel ID where level-up announcements are posted
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="gamificationMultiplier" type="number" default="1.0">
+  Multiplier for XP gains. Higher values = faster leveling.
+  
+  **Example:** `2.0` = double XP, `0.5` = half XP
+</ResponseField>
+
+### Gambling System
+
+<ResponseField name="gambling" type="boolean" default="false">
+  Enables gambling commands and casino features
+</ResponseField>
+
+<ResponseField name="gamblingMultiplier" type="number" default="1.0">
+  Multiplier for gambling payouts and rewards
+</ResponseField>
+
+### Moderation & Infractions
+
+<ResponseField name="infractionsTimeoutThreshold" type="number">
+  Number of infractions before a member is automatically timed out
+</ResponseField>
+
+<ResponseField name="infractionsKickThreshold" type="number">
+  Number of infractions before a member is automatically kicked
+</ResponseField>
+
+<ResponseField name="infractionsBanThreshold" type="number">
+  Number of infractions before a member is automatically banned
+</ResponseField>
+
+### AutoMod Rules
+
+<ResponseField name="emailFilterRule" type="string">
+  AutoMod rule ID for filtering email addresses
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="inviteFilterRule" type="string">
+  AutoMod rule ID for filtering Discord invite links
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="linkFilterRule" type="string">
+  AutoMod rule ID for filtering external links
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+### Starboard
+
+<ResponseField name="starboardChannel" type="string">
+  Channel ID where starred messages (with reaction threshold) are posted
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="starboardThreshold" type="number" default="5">
+  Number of star reactions required for a message to be added to starboard
+</ResponseField>
+
+### Logging Channels
+
+<ResponseField name="moderationLogChannel" type="string">
+  Channel ID for logging moderation actions (kicks, bans, warnings, etc.)
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="serverLogChannel" type="string">
+  Channel ID for logging server events (channel updates, role changes, etc.)
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="serverLogContent" type="boolean" default="false">
+  When enabled, includes message content in server logs (for deleted/edited messages)
+</ResponseField>
+
+### Special Channels
+
+<ResponseField name="suggestionsChannel" type="string">
+  Channel ID where suggestions are posted with automatic reactions
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="reportsChannel" type="string">
+  Channel ID where user reports are sent
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="autoThreadChannels" type="string[]">
+  Array of channel IDs where threads are automatically created for new messages
+</ResponseField>
+
+<ResponseField name="votingChannels" type="string[]">
+  Array of channel IDs where messages automatically get voting reactions (thumbs up/down)
+</ResponseField>
+
+### Special Roles
+
+<ResponseField name="streamerRole" type="string">
+  Role ID automatically assigned to members when they start streaming
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="verifiedRole" type="string">
+  Role ID assigned to members after verification
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+### Twitch Integration
+
+<ResponseField name="twitchNotificationChannel" type="string">
+  Channel ID for Twitch live stream notifications
+  
+  **Constraints:** Unique across all guilds, sparse index
+</ResponseField>
+
+<ResponseField name="twitchNotificationMessage" type="string">
+  Custom message template for stream notifications
+</ResponseField>
+
+<ResponseField name="twitchNotificationUsers" type="string[]">
+  Array of Twitch usernames to monitor for live notifications
+</ResponseField>
+
+### Voice Sessions
+
+<ResponseField name="voiceSessionCategories" type="string[]">
+  Array of category IDs where temporary voice channels are created
+</ResponseField>
+
+<ResponseField name="voiceSessionUserLimit" type="number">
+  Default user limit for created voice session channels. `0` = unlimited
+</ResponseField>
+
+### Server Boosting
+
+<ResponseField name="boosts" type="number" default="0">
+  Number of server boosts. Used for tracking boost level and perks.
+</ResponseField>
+
+## Example Document
+
+```json
+{
+  "_id": "267022940967665664",
+  "chat": true,
+  "greetingChannel": "123456789012345678",
+  "greetingMessage": "Welcome {user.mention} to {guild.name}!",
+  "greetingMessageTimeout": 30000,
+  "music": true,
+  "musicChannel": "234567890123456789",
+  "gamification": true,
+  "gamificationMessages": true,
+  "gamificationChannel": "345678901234567890",
+  "gamificationMultiplier": 1.5,
+  "gambling": true,
+  "gamblingMultiplier": 1.0,
+  "infractionsTimeoutThreshold": 3,
+  "infractionsKickThreshold": 5,
+  "infractionsBanThreshold": 10,
+  "starboardChannel": "456789012345678901",
+  "starboardThreshold": 5,
+  "moderationLogChannel": "567890123456789012",
+  "serverLogChannel": "678901234567890123",
+  "serverLogContent": false,
+  "suggestionsChannel": "789012345678901234",
+  "autoThreadChannels": ["890123456789012345"],
+  "votingChannels": ["901234567890123456"],
+  "streamerRole": "012345678901234567",
+  "voiceSessionCategories": ["123450000000000000"],
+  "voiceSessionUserLimit": 10,
+  "boosts": 14
+}
+```
+
+## Usage Examples
+
+<CodeGroup>
+
+```typescript TypeScript (Mongoose)
+import GuildModel, { Guild } from './models/Guild';
+
+// Find a guild by ID
+const guild = await GuildModel.findById('267022940967665664');
+
+// Create or update guild configuration
+const updatedGuild = await GuildModel.findByIdAndUpdate(
+  '267022940967665664',
+  {
+    gamification: true,
+    gamificationMultiplier: 2.0,
+    gamificationChannel: '345678901234567890'
+  },
+  { upsert: true, new: true }
+);
+
+// Check if music is enabled
+if (guild?.music) {
+  console.log('Music is enabled!');
+}
+```
+
+```javascript JavaScript (Mongoose)
+const GuildModel = require('./models/Guild').default;
+
+// Find all guilds with gamification enabled
+const gamifiedGuilds = await GuildModel.find({
+  gamification: true
+});
+
+console.log(`${gamifiedGuilds.length} guilds have gamification enabled`);
+
+// Disable chat for a specific guild
+await GuildModel.findByIdAndUpdate(
+  '267022940967665664',
+  { chat: false }
+);
+```
+
+```javascript MongoDB Query
+// Find guilds with high boost counts
+db.guilds.find({
+  boosts: { $gte: 14 }
+})
+
+// Find guilds with starboard configured
+db.guilds.find({
+  starboardChannel: { $exists: true }
+})
+
+// Update gambling multiplier for all guilds
+db.guilds.updateMany(
+  { gambling: true },
+  { $set: { gamblingMultiplier: 1.5 } }
+)
+```
+
+</CodeGroup>
+
+## Related Models
+
+- [Member Model](/api/models/member) - Per-server member data
+- [Role Model](/api/models/role) - Enhanced role configurations
+
+<Info>
+Guild documents are automatically created when Bastion joins a new server. Default values apply until explicitly configured.
+</Info>

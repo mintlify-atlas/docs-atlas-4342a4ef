@@ -1,0 +1,184 @@
+---
+title: Report Command
+description: Report server members to moderators with the /report command
+---
+
+The `/report` command allows any server member to report another user to the server's moderation team. Reports are sent to a designated reports channel where moderators can review and take action.
+
+## Usage
+
+```
+/report user:<user> reason:<reason>
+```
+
+## Parameters
+
+<ParamField path="user" type="User" required>
+  The user you want to report to the moderators.
+</ParamField>
+
+<ParamField path="reason" type="String" required>
+  The reason for reporting this user. Be specific and provide context about the violation or behavior.
+</ParamField>
+
+## Required Permissions
+
+<Info>
+  Any server member can use this command. No special permissions are required to submit a report.
+</Info>
+
+## Setup Requirements
+
+<Warning>
+  Before the `/report` command can be used, server administrators must configure a reports channel using Bastion's server configuration.
+</Warning>
+
+To set up the reports channel:
+1. Configure a reports channel in your server settings
+2. Bastion will send all user reports to this channel
+3. Make sure the channel is only visible to moderators and administrators
+
+## How It Works
+
+1. **Submit Report**: A member uses `/report` to submit a report about another user.
+
+2. **Report Sent**: The report is sent as an embedded message to the configured reports channel with:
+   - Reporter's username and ID (in the author field)
+   - Reported user's tag and ID
+   - Reason for the report
+   - Quick action buttons for moderators
+
+3. **Moderator Actions**: Moderators can use the action buttons to:
+   - **Timeout**: Apply a timeout to the reported user
+   - **Kick**: Kick the reported user from the server
+   - **Ban**: Ban the reported user from the server
+
+4. **Confirmation**: The reporter receives an ephemeral confirmation message (only visible to them).
+
+<Note>
+  Reports are sent as ephemeral replies, meaning only the person who submitted the report can see the confirmation message. The reported user will not be notified.
+</Note>
+
+## Report Format
+
+Reports appear in the reports channel as an embedded message:
+
+```
+User Report
+
+Reporter: JohnDoe / 123456789012345678
+
+User: @ReportedUser
+User ID: 987654321098765432
+
+Reason: [The reason provided by the reporter]
+
+[Timeout Button] [Kick Button] [Ban Button]
+```
+
+## Quick Action Buttons
+
+Moderators can take immediate action using the buttons provided with each report:
+
+<ParamField path="Timeout" type="Button">
+  Applies a timeout to the reported user. Moderators click this button to timeout the user directly from the report.
+</ParamField>
+
+<ParamField path="Kick" type="Button">
+  Kicks the reported user from the server.
+</ParamField>
+
+<ParamField path="Ban" type="Button">
+  Bans the reported user from the server.
+</ParamField>
+
+<Info>
+  The action buttons use Discord's button components for quick moderation actions without needing to type additional commands.
+</Info>
+
+## Examples
+
+### Reporting Spam
+
+```
+/report user:@Spammer reason:Posting advertisements in multiple channels despite warnings
+```
+
+### Reporting Harassment
+
+```
+/report user:@BadActor reason:Sending harassing DMs to multiple server members
+```
+
+### Reporting Rule Violations
+
+```
+/report user:@RuleBreaker reason:Sharing inappropriate content in #general
+```
+
+## Response Messages
+
+### Report Received
+
+When a report is successfully submitted:
+> Your report has been received and sent to the moderators.
+
+<Note>
+  This message is ephemeral and only visible to the person who submitted the report.
+</Note>
+
+### Reports Not Configured
+
+If the reports channel is not set up:
+> Reports have not been configured in this server. Please contact a server administrator.
+
+## Best Practices
+
+### For Server Members
+
+1. **Be Specific**: Provide clear details about what happened
+2. **Include Context**: Mention when and where the violation occurred
+3. **One Report Per Issue**: Submit separate reports for different incidents
+4. **Don't Abuse**: Only use reports for legitimate rule violations
+
+### For Moderators
+
+1. **Review Promptly**: Check the reports channel regularly
+2. **Investigate**: Don't take action based solely on the report; verify the claim
+3. **Document**: Use the `/warn` command to document violations
+4. **Communicate**: Let the reporter know the outcome if appropriate
+5. **Secure Channel**: Ensure the reports channel is private and only visible to moderators
+
+<Warning>
+  Make sure your reports channel has proper permissions:
+  - Visible only to moderators and administrators
+  - Not visible to regular members or the @everyone role
+  - Bastion has permission to send messages and embeds
+</Warning>
+
+## Privacy & Security
+
+- Reports are sent as **ephemeral messages** to the reporter, ensuring privacy
+- The reported user is **not notified** that they've been reported
+- Only moderators can see reports in the designated reports channel
+- Reporter information is included to prevent abuse and allow follow-up if needed
+
+## Configuration
+
+Server administrators can configure the reports channel through Bastion's guild settings. The reports channel ID is stored in the Guild database model:
+
+```typescript
+reportsChannel?: string;
+```
+
+<Info>
+  Contact your server administrators if the `/report` command is not working. They need to configure a reports channel in the server settings.
+</Info>
+
+## Related Commands
+
+- [/warn](/commands/moderation/warn) - Warn users and add infractions
+- [/user infractions](/commands/moderation/infractions) - View and manage user infractions
+- [/timeout](/commands/moderation/timeout) - Timeout users (if available)
+- [/kick](/commands/moderation/kick) - Kick users from the server (if available)
+- [/ban](/commands/moderation/ban) - Ban users from the server (if available)

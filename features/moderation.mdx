@@ -1,0 +1,167 @@
+---
+title: Moderation
+description: Keep your Discord server safe with Bastion's powerful moderation tools including warnings, infractions, and automated actions.
+---
+
+Bastion provides comprehensive moderation features to help you maintain order in your Discord server. From warning members to automatic enforcement actions, Bastion streamlines server moderation.
+
+## Warning Members
+
+Warn members who violate server rules and track infractions automatically.
+
+### Warn Command
+
+Use the `/warn` command to issue warnings to members:
+
+```
+/warn user:@member reason:Spamming in general chat
+```
+
+**Parameters:**
+- `user` (required) - The member you want to warn
+- `reason` (required) - The reason for the warning
+
+**Permissions Required:** Moderate Members
+
+<Note>
+When you warn a member, the infraction is automatically logged to their server profile and can trigger automated actions based on your threshold settings.
+</Note>
+
+**Source:** `~/workspace/source/src/commands/warn.ts:15`
+
+## Infractions System
+
+Bastion tracks all member infractions and can automatically take action when thresholds are reached.
+
+### Managing Infractions
+
+Use the `/user infractions` command to view and manage member infractions:
+
+<Tabs>
+  <Tab title="View Infractions">
+    Check a member's infraction history:
+    
+    ```
+    /user infractions user:@member
+    ```
+    
+    This displays all active infractions for the specified member in an embed with numbered entries.
+  </Tab>
+  
+  <Tab title="Configure Thresholds">
+    Set automatic action thresholds for your server:
+    
+    ```
+    /user infractions timeout:3 kick:5 ban:10
+    ```
+    
+    **Threshold Parameters:**
+    - `timeout` - Number of infractions before automatic timeout (15 minutes)
+    - `kick` - Number of infractions before automatic kick
+    - `ban` - Number of infractions before automatic ban
+    
+    <Warning>
+    Setting threshold values requires the **Manage Guild** permission. All infractions are cleared once a member is banned.
+    </Warning>
+  </Tab>
+  
+  <Tab title="Remove Infractions">
+    Remove a specific infraction from a member:
+    
+    ```
+    /user infractions user:@member remove:2
+    ```
+    
+    This removes the infraction at position #2 from the member's record.
+  </Tab>
+</Tabs>
+
+**Permissions Required:** Moderate Members
+
+**Source:** `~/workspace/source/src/commands/user/infractions.ts:16`
+
+## Automated Actions
+
+Bastion automatically enforces moderation actions when members reach infraction thresholds:
+
+<CardGroup cols={3}>
+  <Card title="Timeout" icon="clock">
+    Members are timed out for 15 minutes when they reach the timeout threshold.
+  </Card>
+  
+  <Card title="Kick" icon="door-open">
+    Members are kicked from the server when they reach the kick threshold.
+  </Card>
+  
+  <Card title="Ban" icon="ban">
+    Members are banned from the server when they reach the ban threshold. All infractions are cleared after a ban.
+  </Card>
+</CardGroup>
+
+### How It Works
+
+1. **Warning Issued** - A moderator uses `/warn` on a member
+2. **Infraction Added** - The infraction is recorded in the database
+3. **Threshold Check** - Bastion checks if any thresholds are met
+4. **Action Taken** - If a threshold is reached, the corresponding action is automatically executed
+
+**Source:** `~/workspace/source/src/utils/members.ts:29-66`
+
+## Moderation Logs
+
+Bastion can log all moderation actions to a dedicated channel for transparency and record-keeping.
+
+### Configure Moderation Logs
+
+Set up a moderation log channel using the configuration system:
+
+```yaml
+moderationLogChannel: "channel-id"
+```
+
+When configured, all warning events are logged with:
+- User information (tag and ID)
+- Reason for the warning
+- Moderator who issued the warning
+- Direct link to the warning message
+
+**Database Field:** `Guild.moderationLogChannel`
+
+**Source:** `~/workspace/source/src/models/Guild.ts:43`
+
+## Best Practices
+
+<Accordion title="Setting Appropriate Thresholds">
+  Consider your server size and culture when setting thresholds:
+  
+  - **Small/Community Servers:** `timeout:2 kick:4 ban:7`
+  - **Medium Servers:** `timeout:3 kick:5 ban:10`
+  - **Large/Strict Servers:** `timeout:2 kick:3 ban:5`
+  
+  You can always adjust these values based on your needs.
+</Accordion>
+
+<Accordion title="Clear Communication">
+  Always provide clear, specific reasons when issuing warnings. This helps members understand what they did wrong and creates a transparent moderation record.
+  
+  Good examples:
+  - "Spamming multiple messages in #general"
+  - "Using inappropriate language after previous warning"
+  - "Posting NSFW content in non-NSFW channels"
+</Accordion>
+
+<Accordion title="Regular Review">
+  Periodically review member infractions and consider removing old infractions for members who have improved their behavior. This encourages positive change and shows fairness.
+</Accordion>
+
+## Permission Requirements
+
+To use moderation features, ensure your moderators have:
+
+- **Moderate Members** - Required for `/warn` and viewing infractions
+- **Manage Guild** - Required for configuring infraction thresholds
+- Appropriate role hierarchy to moderate other members
+
+<Note>
+Bastion respects Discord's role hierarchy. Moderators can only warn members with roles lower than their highest role. Server owners can warn anyone.
+</Note>

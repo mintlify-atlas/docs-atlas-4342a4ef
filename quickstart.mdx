@@ -1,80 +1,214 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get Bastion up and running in your Discord server in minutes
 ---
 
-## Get started in three steps
+Get your Bastion Discord bot up and running quickly with this streamlined guide. You'll go from zero to running Bastion in just a few steps.
 
-Get your documentation site running locally and make your first customization.
+## Before you begin
 
-### Step 1: Set up your local environment
+Make sure you have:
+- A Discord account
+- A Discord server where you have administrative permissions
+- Basic familiarity with Discord's interface
+
+<Note>
+  For detailed installation instructions, see the [Installation](/installation) guide.
+</Note>
+
+## Get started
+
+<Steps>
+  <Step title="Create a Discord application">
+    Visit the [Discord Developer Portal](https://discord.com/developers/applications) and create a new application:
+    
+    1. Click **New Application**
+    2. Enter "Bastion" as the application name
+    3. Accept Discord's Terms of Service
+    4. Click **Create**
+  </Step>
+
+  <Step title="Create a bot user">
+    In your application settings:
+    
+    1. Navigate to the **Bot** section in the left sidebar
+    2. Click **Add Bot** and confirm
+    3. Under the bot's username, click **Reset Token**
+    4. Copy the token and save it securely (you'll need this later)
+    
+    <Warning>
+      Never share your bot token publicly. Anyone with your token can control your bot.
+    </Warning>
+  </Step>
+
+  <Step title="Install Bastion">
+    Clone the Bastion repository and install dependencies:
+    
+    ```bash
+    git clone https://github.com/TheBastionBot/Bastion.git
+    cd Bastion
+    npm install
+    ```
+    
+    <Note>
+      You'll need Node.js 18+ and MongoDB running. See [Installation](/installation) for prerequisites.
+    </Note>
+  </Step>
+
+  <Step title="Configure Bastion">
+    Create your configuration file:
+    
+    ```bash
+    cp settings.example.yaml settings.yaml
+    ```
+    
+    Edit `settings.yaml` and add your bot credentials:
+    
+    ```yaml settings.yaml
+    # Bot Token from Step 2
+    token: "YOUR_BOT_TOKEN_HERE"
+    
+    # MongoDB connection
+    mongoURI: "mongodb://127.0.0.1:27017/bastion"
+    ```
+  </Step>
+
+  <Step title="Invite Bastion to your server">
+    In the Discord Developer Portal:
+    
+    1. Go to **OAuth2** → **URL Generator**
+    2. Select these scopes:
+       - `bot`
+       - `applications.commands`
+    3. Select these bot permissions:
+       - Administrator (or specific permissions you want)
+    4. Copy the generated URL and open it in your browser
+    5. Select your server and authorize the bot
+  </Step>
+
+  <Step title="Register slash commands">
+    Build and register Bastion's slash commands:
+    
+    ```bash
+    npm run build
+    npm run commands
+    ```
+    
+    This publishes all slash commands to Discord. It may take a few minutes for commands to appear in your server.
+  </Step>
+
+  <Step title="Start Bastion">
+    Launch your bot:
+    
+    ```bash
+    npm start
+    ```
+    
+    You should see:
+    ```
+    Shard 0 — Launching [ 1 of 1 ]
+    ```
+    
+    Your bot should now appear online in your Discord server!
+  </Step>
+</Steps>
+
+## Test your bot
+
+Try running your first command in your Discord server:
+
+```
+/about
+```
+
+Bastion will respond with information about the bot and links to get started.
+
+<Tip>
+  Type `/` in any channel to see all available commands.
+</Tip>
+
+## Common issues
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+  <Accordion title="Bot doesn't appear online">
+    - Verify your bot token is correct in `settings.yaml`
+    - Check that MongoDB is running: `mongod --version`
+    - Look for error messages in the console output
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+
+  <Accordion title="Slash commands don't appear">
+    - Wait a few minutes for Discord to register commands
+    - Ensure you ran `npm run commands` successfully
+    - Try kicking and re-inviting the bot with the OAuth2 URL
   </Accordion>
-</AccordionGroup>
 
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
+  <Accordion title="Database connection failed">
+    - Verify MongoDB is running
+    - Check your `mongoURI` in `settings.yaml`
+    - For Docker: use `host.docker.internal` instead of `127.0.0.1`
   </Accordion>
 </AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that Bastion is running, explore its features:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Configure features" icon="gear" href="/configuration/settings">
+    Set up music, moderation, gamification, and more
+  </Card>
+  
+  <Card title="Browse commands" icon="terminal" href="/commands/overview">
+    Discover all available commands
+  </Card>
+  
+  <Card title="Deploy with Docker" icon="docker" href="/deployment/docker">
+    Run Bastion in a container
+  </Card>
+  
+  <Card title="Set up API keys" icon="key" href="/configuration/api-keys">
+    Enable AI chat, weather, and other features
+  </Card>
 </CardGroup>
 
+## Production deployment
+
+For production use, consider these options:
+
+<Tabs>
+  <Tab title="Bash Script">
+    Use the included bash script for easy management:
+    
+    ```bash
+    ./bastion.sh start    # Start Bastion
+    ./bastion.sh stop     # Stop Bastion
+    ./bastion.sh restart  # Restart Bastion
+    ./bastion.sh update   # Update to latest version
+    ```
+  </Tab>
+  
+  <Tab title="Docker">
+    Run with Docker for isolated deployment:
+    
+    ```bash
+    docker build -t bastion .
+    docker run -d --name bastion \
+      -v $(pwd)/settings.yaml:/app/settings.yaml \
+      bastion
+    ```
+    
+    See [Docker deployment](/deployment/docker) for details.
+  </Tab>
+  
+  <Tab title="Windows">
+    Use the PowerShell script:
+    
+    ```powershell
+    .\bastion.cmd
+    ```
+  </Tab>
+</Tabs>
+
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  Need detailed installation instructions? See the complete [Installation guide](/installation).
 </Note>

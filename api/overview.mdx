@@ -1,0 +1,83 @@
+---
+title: "API Overview"
+description: "Comprehensive overview of the Bastion Discord bot API and its capabilities"
+---
+
+## Introduction
+
+The Bastion API provides programmatic access to your Discord bot's data and status information. It's built using Express.js and provides RESTful endpoints for monitoring and managing your bot deployment.
+
+## Base URL
+
+The API server runs on the port configured in your `settings.yaml` file:
+
+```
+http://localhost:8377
+```
+
+You can configure the port using:
+- `port` field in `settings.yaml`
+- `BASTION_API_PORT` environment variable
+- `PORT` environment variable
+
+<Note>
+The API server will only start if both the `port` and `auth` settings are configured.
+</Note>
+
+## Key Features
+
+The Bastion API provides:
+
+<CardGroup cols={2}>
+  <Card title="Bot Status" icon="chart-line">
+    Real-time information about bot shards, uptime, and performance metrics
+  </Card>
+  <Card title="Guild Data" icon="server">
+    Access to guild configurations, settings, and moderation rules
+  </Card>
+  <Card title="Member Profiles" icon="users">
+    Retrieve member data including balance, experience, karma, and infractions
+  </Card>
+  <Card title="Role Management" icon="shield">
+    Query role configurations and auto-assignment rules
+  </Card>
+</CardGroup>
+
+## Data Models
+
+The API exposes three primary data models stored in MongoDB:
+
+- **[Guild](/api/models/guild)** - Server configurations and feature settings
+- **[Member](/api/models/member)** - Per-server member profiles and gamification data
+- **[Role](/api/models/role)** - Enhanced role configurations and automation
+
+## Rate Limiting
+
+Currently, the API does not implement rate limiting. It's recommended to:
+
+- Keep your auth token secure
+- Only expose the API within trusted networks
+- Implement your own rate limiting if exposing publicly
+
+<Warning>
+The API is designed for internal use and monitoring. Exposing it publicly without additional security measures is not recommended.
+</Warning>
+
+## Response Format
+
+All API responses are in JSON format. Successful responses return relevant data with appropriate HTTP status codes:
+
+- `200 OK` - Successful request
+- `401 Unauthorized` - Missing or invalid authentication
+- `500 Internal Server Error` - Server-side error
+
+## Getting Started
+
+1. Configure your `settings.yaml` file with a port and auth token
+2. Start the Bastion bot - the API server starts automatically
+3. Review the [Authentication](/api/authentication) guide
+4. Explore available [Endpoints](/api/endpoints)
+
+<Info>
+The API uses the Tesseract WebServer module from `@bastion/tesseract` package for HTTP server functionality.
+</Info>

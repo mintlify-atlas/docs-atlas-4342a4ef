@@ -1,0 +1,332 @@
+---
+title: Message Commands
+description: Manage channel messages with bulk delete and filtering options
+---
+
+Manage messages in your server channels with Bastion's message management commands. Bulk delete messages with advanced filtering options to keep your channels clean and organized.
+
+## Overview
+
+The `/message` command group provides message management functionality:
+
+- Bulk delete recent messages (up to 2 weeks old)
+- Filter messages by user, bot status, pinned status, or system messages
+- Clear specific amounts of messages with customizable limits
+
+<Warning>
+Message deletion is permanent and cannot be undone. Deleted messages cannot be recovered. Use this command carefully.
+</Warning>
+
+## Clear Messages
+
+Clear recent messages from the current channel with optional filters.
+
+```bash
+/message clear [options]
+```
+
+### Parameters
+
+<ParamField path="limit" type="integer">
+  Limit the number of messages that should be deleted (1-100). Default is 100 if not specified.
+</ParamField>
+
+<ParamField path="bots" type="boolean">
+  Filter messages from bots:
+  - `True` - Only delete messages from bots
+  - `False` - Only delete messages from humans
+  - Not specified - Delete messages from both bots and humans
+</ParamField>
+
+<ParamField path="pinned" type="boolean">
+  Filter pinned messages:
+  - `True` - Only delete pinned messages
+  - `False` - Only delete unpinned messages
+  - Not specified - Delete both pinned and unpinned messages
+</ParamField>
+
+<ParamField path="system" type="boolean">
+  Filter system messages:
+  - `True` - Only delete system messages (join messages, boost messages, etc.)
+  - `False` - Only delete regular messages
+  - Not specified - Delete both system and regular messages
+</ParamField>
+
+<ParamField path="user" type="user">
+  Only delete messages from the specified user.
+</ParamField>
+
+### How It Works
+
+1. The command fetches up to the specified limit of recent messages (before the command message)
+2. Applies all specified filters to narrow down which messages to delete
+3. Bulk deletes the filtered messages
+4. Reports how many messages were successfully deleted
+
+<Note>
+Discord's API only allows bulk deletion of messages that are less than 14 days old. Older messages cannot be deleted with this command.
+</Note>
+
+### Examples
+
+<Tabs>
+  <Tab title="Delete Recent Messages">
+    ```bash
+    /message clear limit:50
+    ```
+    Deletes the last 50 messages in the channel.
+  </Tab>
+  
+  <Tab title="Clear All Recent">
+    ```bash
+    /message clear
+    ```
+    Deletes up to the last 100 messages (default limit).
+  </Tab>
+  
+  <Tab title="Delete Bot Messages">
+    ```bash
+    /message clear limit:30 bots:True
+    ```
+    Deletes up to 30 messages, but only those sent by bots.
+  </Tab>
+  
+  <Tab title="Delete from User">
+    ```bash
+    /message clear user:@SpamUser limit:25
+    ```
+    Deletes up to 25 messages from a specific user.
+  </Tab>
+  
+  <Tab title="Preserve Pinned">
+    ```bash
+    /message clear limit:100 pinned:False
+    ```
+    Deletes up to 100 messages while keeping pinned messages.
+  </Tab>
+  
+  <Tab title="Remove System Messages">
+    ```bash
+    /message clear limit:50 system:True
+    ```
+    Removes only system messages (joins, boosts, etc.) from the last 50 messages.
+  </Tab>
+</Tabs>
+
+### Advanced Filtering
+
+You can combine multiple filters for precise message deletion:
+
+<Tabs>
+  <Tab title="User + Limit">
+    ```bash
+    /message clear user:@Member limit:10
+    ```
+    Deletes up to 10 messages from a specific member.
+  </Tab>
+  
+  <Tab title="Bots + Preserve Pinned">
+    ```bash
+    /message clear bots:True pinned:False
+    ```
+    Deletes bot messages while preserving pinned messages.
+  </Tab>
+  
+  <Tab title="Human Messages Only">
+    ```bash
+    /message clear limit:50 bots:False system:False
+    ```
+    Deletes only human messages, excluding both bot and system messages.
+  </Tab>
+  
+  <Tab title="Clean Spam">
+    ```bash
+    /message clear user:@Spammer bots:False limit:100
+    ```
+    Removes messages from a specific user who is not a bot.
+  </Tab>
+</Tabs>
+
+## Filter Combinations
+
+Understand how filters work together:
+
+### Single Filters
+
+- `limit:50` - Delete up to 50 messages
+- `bots:True` - Delete only bot messages
+- `user:@Member` - Delete only messages from @Member
+- `pinned:False` - Delete only unpinned messages
+- `system:True` - Delete only system messages
+
+### Combined Filters
+
+Filters are applied as AND conditions:
+
+```bash
+/message clear user:@Member bots:False limit:20
+```
+This deletes messages that are:
+- From @Member AND
+- Not from a bot AND
+- Limited to 20 messages
+
+```bash
+/message clear bots:True pinned:False
+```
+This deletes messages that are:
+- From bots AND
+- Not pinned
+
+## Required Permissions
+
+### User Permissions
+
+- **Manage Messages** - Required to use the clear command
+
+### Bot Permissions
+
+- **Manage Messages** - Required to delete messages
+
+<Note>
+Users can always delete their own messages, but the Manage Messages permission is required to delete messages from other users.
+</Note>
+
+## Limitations
+
+### Discord API Limitations
+
+1. **Age Restriction** - Only messages newer than 14 days can be bulk deleted
+2. **Maximum Limit** - Can only fetch and delete up to 100 messages at a time
+3. **Rate Limits** - Bulk delete operations are rate-limited by Discord
+
+### Behavior Notes
+
+- The command message itself is not deleted
+- Messages are fetched before the command message (not including it)
+- If fewer matching messages exist than the limit, only the matching messages are deleted
+- The response shows how many messages were actually deleted
+
+<Warning>
+If no messages match your filters, or if all messages are older than 14 days, no messages will be deleted and Bastion will inform you that no messages were found to delete.
+</Warning>
+
+## Common Use Cases
+
+<Tabs>
+  <Tab title="Quick Cleanup">
+    Clean up recent spam or clutter:
+    
+    ```bash
+    # Clear recent messages
+    /message clear limit:20
+    
+    # Clear messages from a spammer
+    /message clear user:@Spammer limit:50
+    ```
+  </Tab>
+  
+  <Tab title="Bot Cleanup">
+    Remove bot command responses and clutter:
+    
+    ```bash
+    # Remove all bot messages
+    /message clear bots:True limit:50
+    
+    # Keep important pinned bot messages
+    /message clear bots:True pinned:False
+    ```
+  </Tab>
+  
+  <Tab title="Event Cleanup">
+    Clean up after events or activities:
+    
+    ```bash
+    # Remove all system join messages after event
+    /message clear system:True limit:100
+    
+    # Clear event chat but preserve pinned announcements
+    /message clear pinned:False limit:100
+    ```
+  </Tab>
+  
+  <Tab title="Channel Reset">
+    Reset a channel by removing most recent messages:
+    
+    ```bash
+    # Clear everything (up to 100 messages)
+    /message clear
+    
+    # Clear everything except pinned messages
+    /message clear pinned:False
+    
+    # Clear everything except important pins and system messages
+    /message clear pinned:False system:False
+    ```
+  </Tab>
+  
+  <Tab title="Selective Cleanup">
+    Target specific types of messages:
+    
+    ```bash
+    # Remove only human messages (keep bot responses)
+    /message clear bots:False
+    
+    # Remove only unpinned human messages
+    /message clear bots:False pinned:False
+    
+    # Clean up a specific user's spam
+    /message clear user:@SpamUser limit:100
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+1. **Start Small** - Use a smaller limit first to verify you're deleting the right messages
+2. **Preserve Pins** - Use `pinned:False` to preserve important pinned messages
+3. **Check First** - Scroll up to see what messages will be affected before running the command
+4. **Use Filters** - Combine filters to target exactly the messages you want to remove
+5. **Regular Cleanup** - Schedule regular cleanups in busy channels to maintain organization
+6. **Audit Log** - Check your server's audit log to see deletion history
+7. **Backup Important Data** - Export important messages before large-scale deletions
+
+## Troubleshooting
+
+### No Messages Deleted
+
+If no messages are deleted, check:
+
+1. **Message Age** - Are all messages older than 14 days?
+2. **Filters Too Strict** - Do any messages match all your filter criteria?
+3. **Permissions** - Does Bastion have Manage Messages permission?
+4. **Empty Channel** - Are there any messages to delete?
+
+### Partial Deletion
+
+If fewer messages are deleted than expected:
+
+1. **14-Day Limit** - Older messages are automatically excluded
+2. **Filter Matching** - Only messages matching all filters are deleted
+3. **Pinned Messages** - Pinned messages are included unless filtered out
+4. **Fetch Limit** - Only the most recent messages (up to limit) are considered
+
+### Permission Errors
+
+If you see permission errors:
+
+1. Check that you have **Manage Messages** permission
+2. Verify Bastion has **Manage Messages** permission
+3. Ensure you're in a text channel (not DM or thread)
+
+## Response Messages
+
+Bastion provides feedback after executing the clear command:
+
+- **Success** - "I've deleted X messages from this channel."
+- **No Messages** - "I couldn't find any messages that can be deleted."
+
+The success message tells you exactly how many messages were deleted, which may be fewer than your limit if:
+- Fewer matching messages existed
+- Some messages were older than 14 days
+- Some messages didn't match your filters

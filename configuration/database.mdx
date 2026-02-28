@@ -1,0 +1,482 @@
+---
+title: Database Configuration
+description: Set up and configure MongoDB database connection for Bastion bot data storage and persistence
+---
+
+Bastion uses MongoDB as its database to store server configurations, user data, command history, and other persistent information. This guide covers MongoDB setup and connection configuration.
+
+## MongoDB Overview
+
+MongoDB is a NoSQL document database that Bastion uses for:
+
+- Server and guild configurations
+- User preferences and settings
+- Command usage statistics
+- Music queue history
+- Custom command data
+- Role and permission settings
+- Moderation logs and warnings
+
+## Installation
+
+Choose one of the following MongoDB installation methods:
+
+### Local MongoDB Installation
+
+<CodeGroup>
+```bash "Ubuntu/Debian"
+# Import MongoDB public GPG key
+wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+
+# Add MongoDB repository
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+
+# Update and install
+sudo apt update
+sudo apt install -y mongodb-org
+
+# Start MongoDB
+sudo systemctl start mongod
+sudo systemctl enable mongod
+```
+
+```bash "macOS (Homebrew)"
+# Install MongoDB
+brew tap mongodb/brew
+brew install mongodb-community@7.0
+
+# Start MongoDB
+brew services start mongodb-community@7.0
+```
+
+```bash "Windows (Chocolatey)"
+# Install MongoDB
+choco install mongodb
+
+# Start MongoDB service
+net start MongoDB
+```
+
+```bash "Docker"
+# Run MongoDB container
+docker run -d \
+  --name mongodb \
+  -p 27017:27017 \
+  -v mongodb-data:/data/db \
+  mongo:latest
+```
+</CodeGroup>
+
+### MongoDB Atlas (Cloud)
+
+MongoDB Atlas provides a free cloud-hosted MongoDB database:
+
+1. Sign up at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a free M0 cluster
+3. Configure network access (add your IP or allow from anywhere for development)
+4. Create a database user with credentials
+5. Get your connection string from the "Connect" button
+
+<Info>
+  MongoDB Atlas free tier (M0) includes 512 MB storage, which is sufficient for most small to medium Discord bots.
+</Info>
+
+## Configuration
+
+### Connection URI
+
+The MongoDB connection URI format:
+
+```
+mongodb://[username:password@]host[:port]/[database][?options]
+```
+
+### Local MongoDB
+
+For MongoDB running on localhost:
+
+<CodeGroup>
+```yaml "settings.yaml"
+mongoURI: "mongodb://127.0.0.1:27017/bastion"
+```
+
+```bash ".env"
+MONGO_URI=mongodb://127.0.0.1:27017/bastion
+```
+</CodeGroup>
+
+<Note>
+  The default MongoDB port is `27017`. The database name `bastion` will be created automatically if it doesn't exist.
+</Note>
+
+### MongoDB with Authentication
+
+If your MongoDB instance requires authentication:
+
+<CodeGroup>
+```yaml "settings.yaml"
+mongoURI: "mongodb://username:password@localhost:27017/bastion?authSource=admin"
+```
+
+```bash ".env"
+MONGO_URI=mongodb://username:password@localhost:27017/bastion?authSource=admin
+```
+</CodeGroup>
+
+<Warning>
+  URL-encode special characters in username and password. For example, if your password is `p@ssw0rd!`, encode it as `p%40ssw0rd%21`.
+</Warning>
+
+### MongoDB Atlas (Cloud)
+
+For MongoDB Atlas connection:
+
+<CodeGroup>
+```yaml "settings.yaml"
+mongoURI: "mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/bastion?retryWrites=true&w=majority"
+```
+
+```bash ".env"
+MONGO_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/bastion?retryWrites=true&w=majority
+```
+</CodeGroup>
+
+<Info>
+  The `mongodb+srv://` protocol is used for MongoDB Atlas. It automatically handles connection pooling and replica set discovery.
+</Info>
+
+### Docker Deployment
+
+When running Bastion in Docker with local MongoDB:
+
+#### Bastion in Docker, MongoDB on Host
+
+```bash .env
+# Replace 127.0.0.1 with host.docker.internal
+MONGO_URI=mongodb://host.docker.internal:27017/bastion
+```
+
+<Warning>
+  **Important for Docker Users**: When Bastion runs inside a Docker container and MongoDB runs on the host machine, use `host.docker.internal` instead of `127.0.0.1` or `localhost`.
+</Warning>
+
+#### Both in Docker Compose
+
+```yaml docker-compose.yml
+version: '3.8'
+
+services:
+  bastion:
+    image: bastion
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/bastion
+    depends_on:
+      - mongodb
+  
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=bastion
+
+volumes:
+  mongodb-data:
+```
+
+<Info>
+  In Docker Compose, use the service name (`mongodb`) as the hostname in the connection URI.
+</Info>
+
+## Connection Options
+
+You can add various options to your MongoDB URI:
+
+### Common Options
+
+<ParamField query="authSource" type="string" default="admin">
+  The database to authenticate against.
+  
+  ```
+  mongodb://user:pass@localhost:27017/bastion?authSource=admin
+  ```
+</ParamField>
+
+<ParamField query="retryWrites" type="boolean" default="true">
+  Enable retryable writes for improved reliability.
+  
+  ```
+  mongodb://localhost:27017/bastion?retryWrites=true
+  ```
+</ParamField>
+
+<ParamField query="w" type="string" default="majority">
+  Write concern. `majority` ensures writes are acknowledged by majority of replica set members.
+  
+  ```
+  mongodb://localhost:27017/bastion?w=majority
+  ```
+</ParamField>
+
+<ParamField query="maxPoolSize" type="number" default="100">
+  Maximum number of connections in the connection pool.
+  
+  ```
+  mongodb://localhost:27017/bastion?maxPoolSize=50
+  ```
+</ParamField>
+
+<ParamField query="minPoolSize" type="number" default="0">
+  Minimum number of connections in the connection pool.
+  
+  ```
+  mongodb://localhost:27017/bastion?minPoolSize=10
+  ```
+</ParamField>
+
+<ParamField query="serverSelectionTimeoutMS" type="number" default="30000">
+  Timeout for selecting a server (in milliseconds).
+  
+  ```
+  mongodb://localhost:27017/bastion?serverSelectionTimeoutMS=5000
+  ```
+</ParamField>
+
+### Example with Multiple Options
+
+```bash
+MONGO_URI=mongodb://user:pass@localhost:27017/bastion?authSource=admin&retryWrites=true&w=majority&maxPoolSize=50
+```
+
+## Database Management
+
+### Accessing the Database
+
+Connect to your MongoDB instance using the Mongo shell:
+
+```bash
+# Connect to local MongoDB
+mongosh mongodb://127.0.0.1:27017/bastion
+
+# Connect with authentication
+mongosh "mongodb://username:password@localhost:27017/bastion?authSource=admin"
+
+# Connect to MongoDB Atlas
+mongosh "mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/bastion"
+```
+
+### Common Database Operations
+
+<CodeGroup>
+```javascript "List Collections"
+// Show all collections in the bastion database
+show collections
+```
+
+```javascript "View Documents"
+// View documents from a collection
+db.guilds.find().pretty()
+db.users.find().limit(10).pretty()
+```
+
+```javascript "Count Documents"
+// Count documents in a collection
+db.guilds.countDocuments()
+db.users.countDocuments()
+```
+
+```javascript "Delete Documents"
+// Delete specific documents
+db.guilds.deleteOne({ _id: "guild_id_here" })
+
+// Clear entire collection (use with caution!)
+db.guilds.deleteMany({})
+```
+
+```javascript "Database Stats"
+// Get database statistics
+db.stats()
+```
+</CodeGroup>
+
+### Backup and Restore
+
+<CodeGroup>
+```bash "Backup Database"
+# Backup entire database
+mongodump --uri="mongodb://127.0.0.1:27017/bastion" --out=/path/to/backup
+
+# Backup with authentication
+mongodump --uri="mongodb://user:pass@localhost:27017/bastion?authSource=admin" --out=/path/to/backup
+```
+
+```bash "Restore Database"
+# Restore from backup
+mongorestore --uri="mongodb://127.0.0.1:27017/bastion" /path/to/backup/bastion
+
+# Restore and drop existing collections first
+mongorestore --uri="mongodb://127.0.0.1:27017/bastion" --drop /path/to/backup/bastion
+```
+</CodeGroup>
+
+<Warning>
+  Always backup your database before performing major updates or migrations. Store backups in a secure location separate from your production environment.
+</Warning>
+
+## Troubleshooting
+
+### Connection Refused
+
+**Error**: `MongoServerError: connect ECONNREFUSED 127.0.0.1:27017`
+
+**Solutions**:
+
+1. Verify MongoDB is running:
+   ```bash
+   # Check MongoDB status
+   sudo systemctl status mongod
+   # or for macOS
+   brew services list | grep mongodb
+   ```
+
+2. Start MongoDB if not running:
+   ```bash
+   sudo systemctl start mongod
+   # or for macOS
+   brew services start mongodb-community@7.0
+   ```
+
+3. Check if MongoDB is listening on the correct port:
+   ```bash
+   sudo netstat -tlnp | grep 27017
+   # or
+   sudo lsof -i :27017
+   ```
+
+### Authentication Failed
+
+**Error**: `MongoServerError: Authentication failed`
+
+**Solutions**:
+
+1. Verify credentials are correct
+2. Check the `authSource` parameter:
+   ```
+   mongodb://user:pass@localhost:27017/bastion?authSource=admin
+   ```
+3. Ensure the user has proper permissions:
+   ```javascript
+   // In mongosh
+   use admin
+   db.createUser({
+     user: "bastionuser",
+     pwd: "password",
+     roles: [{ role: "readWrite", db: "bastion" }]
+   })
+   ```
+
+### Docker Container Can't Reach MongoDB
+
+**Error**: Connection refused when running Bastion in Docker
+
+**Solutions**:
+
+1. Use `host.docker.internal` instead of `localhost` or `127.0.0.1`:
+   ```bash
+   MONGO_URI=mongodb://host.docker.internal:27017/bastion
+   ```
+
+2. Or use Docker networking with service names in docker-compose:
+   ```yaml
+   services:
+     bastion:
+       environment:
+         - MONGO_URI=mongodb://mongodb:27017/bastion
+     mongodb:
+       image: mongo:7.0
+   ```
+
+### MongoDB Atlas Connection Issues
+
+**Error**: Connection timeout or DNS resolution failures
+
+**Solutions**:
+
+1. Check network access settings in MongoDB Atlas
+   - Add your current IP address to the IP Access List
+   - Or allow access from anywhere (0.0.0.0/0) for development
+
+2. Verify connection string format:
+   ```
+   mongodb+srv://user:pass@cluster.xxxxx.mongodb.net/bastion
+   ```
+
+3. Ensure user has database permissions in Atlas
+
+### Slow Query Performance
+
+**Solutions**:
+
+1. Create indexes for frequently queried fields
+2. Monitor slow queries:
+   ```javascript
+   db.setProfilingLevel(1, { slowms: 100 })
+   db.system.profile.find().limit(10).sort({ ts: -1 }).pretty()
+   ```
+3. Increase connection pool size in URI:
+   ```
+   mongodb://localhost:27017/bastion?maxPoolSize=50
+   ```
+
+## Database Schema
+
+Bastion automatically creates collections as needed. Common collections include:
+
+- `guilds` - Server configurations and settings
+- `users` - User data and preferences
+- `members` - Server-specific member data
+- `roles` - Custom role configurations
+- `channels` - Channel-specific settings
+- `commands` - Custom command definitions
+- `warnings` - Moderation warnings and logs
+
+<Info>
+  You don't need to manually create these collections. Bastion's database models handle schema creation automatically.
+</Info>
+
+## Security Best Practices
+
+1. **Enable Authentication**
+   - Never run MongoDB without authentication in production
+   - Create dedicated users with minimal required permissions
+
+2. **Use Strong Passwords**
+   - Generate random, complex passwords
+   - Store credentials securely (use environment variables)
+
+3. **Restrict Network Access**
+   - Use firewall rules to limit MongoDB access
+   - For MongoDB Atlas, use IP whitelisting
+
+4. **Enable Encryption**
+   - Use TLS/SSL for connections to MongoDB
+   - Enable encryption at rest for sensitive data
+
+5. **Regular Backups**
+   - Schedule automated daily backups
+   - Test restore procedures periodically
+   - Store backups in secure, off-site locations
+
+6. **Monitor Access**
+   - Enable MongoDB audit logging
+   - Monitor for suspicious connection patterns
+   - Review database access logs regularly
+
+## See Also
+
+- [Settings Configuration](/configuration/settings) - Complete settings.yaml reference
+- [Environment Variables](/configuration/environment-variables) - Using MONGO_URI environment variable
+- [MongoDB Documentation](https://docs.mongodb.com/) - Official MongoDB documentation
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) - Cloud-hosted MongoDB service

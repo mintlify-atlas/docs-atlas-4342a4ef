@@ -1,0 +1,565 @@
+---
+title: Self-Hosting Guide
+description: Deploy Bastion manually on your own server for full control and customization
+---
+
+Self-host Bastion on your own server with manual deployment. This method gives you complete control over the environment and is ideal for development or customized production setups.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Node.js">
+    Install Node.js LTS (version 18 or higher):
+    - Download from [nodejs.org](https://nodejs.org/)
+    - Verify installation: `node --version`
+  </Step>
+
+  <Step title="MongoDB">
+    Set up MongoDB:
+    - [MongoDB Community Server](https://www.mongodb.com/try/download/community) (local)
+    - [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (cloud)
+    - Verify connection: `mongosh` or `mongo`
+  </Step>
+
+  <Step title="FFmpeg">
+    Install FFmpeg for audio processing (required for music features):
+
+    <CodeGroup>
+
+    ```bash Linux (Ubuntu/Debian)
+    sudo apt update
+    sudo apt install ffmpeg
+    ```
+
+    ```bash macOS
+    brew install ffmpeg
+    ```
+
+    ```bash Windows
+    # Download from https://ffmpeg.org/download.html
+    # Or use chocolatey:
+    choco install ffmpeg
+    ```
+
+    </CodeGroup>
+
+    Verify installation: `ffmpeg -version`
+  </Step>
+
+  <Step title="Git">
+    Install Git for cloning the repository:
+    - Download from [git-scm.com](https://git-scm.com/)
+    - Verify installation: `git --version`
+  </Step>
+</Steps>
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/TheBastionBot/Bastion.git
+    cd Bastion
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+
+    <Note>
+      This will install all required dependencies including Discord.js, Tesseract framework, and optional performance packages.
+    </Note>
+  </Step>
+
+  <Step title="Build the project">
+    ```bash
+    npm run build
+    ```
+
+    This compiles TypeScript to JavaScript in the `dist` directory.
+  </Step>
+
+  <Step title="Configure Bastion">
+    Create your configuration file by copying the example:
+
+    <CodeGroup>
+
+    ```bash Using settings.yaml
+    cp settings.example.yaml settings.yaml
+    ```
+
+    ```bash Using .env
+    cp .env.example .env
+    ```
+
+    </CodeGroup>
+
+    Edit the configuration file with your bot credentials and settings.
+  </Step>
+</Steps>
+
+## Configuration
+
+### Method 1: Using settings.yaml (Recommended)
+
+Edit `settings.yaml` with your configuration:
+
+```yaml
+# Bot credentials
+id: "YOUR_BOT_CLIENT_ID"
+token: "YOUR_BOT_TOKEN"
+
+# Bot owners
+owners:
+  - "YOUR_USER_ID"
+  - "ANOTHER_USER_ID"
+
+# MongoDB connection
+mongoURI: "mongodb://127.0.0.1:27017/bastion"
+
+# Presences
+presences:
+- status: "online"
+  activity: 3
+  name: "the server"
+- status: "dnd"
+  activity: 1
+  name: "some games"
+  url: https://twitch.tv/iamtraction
+
+# Features
+musicActivity: true
+relayDirectMessages: false
+unsafeMode: false
+
+# API Server
+port: 8377
+auth: "YOUR_API_AUTH_TOKEN"
+```
+
+<Info>
+  The `settings.yaml` file supports more configuration options than environment variables, including multiple owners, custom presences, and API keys.
+</Info>
+
+### Method 2: Using .env
+
+Edit `.env` with your credentials:
+
+```bash
+# Bot credentials
+BOT_ID=YOUR_BOT_CLIENT_ID
+BOT_TOKEN=YOUR_BOT_TOKEN
+OWNER_ID=YOUR_USER_ID
+
+# MongoDB
+MONGO_URI=mongodb://127.0.0.1:27017/bastion
+
+# Features
+UNSAFE_MODE=FALSE
+BASTION_MUSIC_ACTIVITY=TRUE
+BASTION_RELAY_DMS=FALSE
+
+# API Server
+BASTION_API_PORT=8377
+```
+
+<Warning>
+  Environment variables in `.env` override corresponding values in `settings.yaml`.
+</Warning>
+
+### Discord Bot Setup
+
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create a new application or select an existing one
+3. Navigate to the **Bot** section
+4. Copy the **Token** and **Client ID**
+5. Enable the following **Privileged Gateway Intents**:
+   - Presence Intent
+   - Server Members Intent
+   - Message Content Intent
+
+<Warning>
+  Keep your bot token secret. Never commit it to version control or share it publicly.
+</Warning>
+
+## Running Bastion
+
+### Using npm (Cross-platform)
+
+```bash
+npm start
+```
+
+This runs the sharding manager (`src/index.ts`) which spawns bot shards.
+
+### Using Bastion Scripts
+
+Bastion includes platform-specific helper scripts for easier management.
+
+<CodeGroup>
+
+```bash Linux / macOS
+# Start Bastion
+./bastion.sh --start
+
+# Stop Bastion
+./bastion.sh --stop
+
+# Restart Bastion
+./bastion.sh --restart
+
+# Check status
+./bastion.sh --status
+
+# Show logs
+./bastion.sh --show
+
+# Debug mode
+./bastion.sh --debug
+
+# Update Bastion
+./bastion.sh --update
+
+# Show help
+./bastion.sh
+```
+
+```powershell Windows
+# Run the interactive menu
+.\bastion.cmd
+```
+
+</CodeGroup>
+
+<Info>
+  The `bastion.sh` script provides convenient commands for managing Bastion on Linux/macOS. On Windows, `bastion.cmd` launches an interactive PowerShell menu.
+</Info>
+
+### Running in Development Mode
+
+For development with hot-reload:
+
+```bash
+# Watch for changes and rebuild
+npm run build -- --watch
+
+# In another terminal, run with nodemon
+npx nodemon dist/index.js
+```
+
+## Process Management
+
+For production deployments, use a process manager to keep Bastion running.
+
+### Using PM2 (Recommended)
+
+<Steps>
+  <Step title="Install PM2">
+    ```bash
+    npm install -g pm2
+    ```
+  </Step>
+
+  <Step title="Start Bastion with PM2">
+    ```bash
+    pm2 start npm --name "bastion" -- start
+    ```
+  </Step>
+
+  <Step title="Enable auto-restart on system boot">
+    ```bash
+    pm2 startup
+    pm2 save
+    ```
+  </Step>
+
+  <Step title="Manage with PM2">
+    <CodeGroup>
+
+    ```bash View status
+    pm2 status
+    ```
+
+    ```bash View logs
+    pm2 logs bastion
+    ```
+
+    ```bash Restart
+    pm2 restart bastion
+    ```
+
+    ```bash Stop
+    pm2 stop bastion
+    ```
+
+    ```bash Monitor
+    pm2 monit
+    ```
+
+    </CodeGroup>
+  </Step>
+</Steps>
+
+### Using systemd (Linux)
+
+Create a systemd service file at `/etc/systemd/system/bastion.service`:
+
+```ini
+[Unit]
+Description=Bastion Discord Bot
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/Bastion
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=10
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable bastion
+sudo systemctl start bastion
+sudo systemctl status bastion
+```
+
+## npm Scripts Reference
+
+Bastion includes several npm scripts for various tasks:
+
+```json
+{
+  "build": "tsc",                    // Compile TypeScript
+  "build:commands": "tesseract commands",  // Build command definitions
+  "commands": "tesseract publish",   // Publish commands to Discord
+  "migrate": "node ./dist/migrate.js",    // Run database migrations
+  "start": "node .",                 // Start the bot
+  "test": "eslint ."                 // Run linter
+}
+```
+
+### Publishing Commands
+
+After initial setup or when adding new commands:
+
+```bash
+npm run commands
+```
+
+This registers all slash commands with Discord.
+
+<Note>
+  You only need to run this once or when you add/modify commands.
+</Note>
+
+## Updating Bastion
+
+<Steps>
+  <Step title="Stop Bastion">
+    ```bash
+    # If using PM2
+    pm2 stop bastion
+
+    # If using systemd
+    sudo systemctl stop bastion
+
+    # If running directly
+    # Press Ctrl+C or use ./bastion.sh --stop
+    ```
+  </Step>
+
+  <Step title="Pull latest changes">
+    ```bash
+    git pull
+    ```
+  </Step>
+
+  <Step title="Update dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Rebuild">
+    ```bash
+    npm run build
+    ```
+  </Step>
+
+  <Step title="Run migrations (if needed)">
+    ```bash
+    npm run migrate
+    ```
+  </Step>
+
+  <Step title="Restart Bastion">
+    ```bash
+    # If using PM2
+    pm2 restart bastion
+
+    # If using systemd
+    sudo systemctl start bastion
+
+    # If running directly
+    npm start
+    # Or: ./bastion.sh --start
+    ```
+  </Step>
+</Steps>
+
+<Info>
+  You can also use `./bastion.sh --update` on Linux/macOS, which automates this process.
+</Info>
+
+## Troubleshooting
+
+### Module not found errors
+
+```bash
+# Clean install dependencies
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+```
+
+### MongoDB connection failed
+
+1. Verify MongoDB is running:
+   ```bash
+   # Check service status
+   sudo systemctl status mongod  # Linux
+   brew services list            # macOS
+   ```
+
+2. Test connection:
+   ```bash
+   mongosh mongodb://127.0.0.1:27017/bastion
+   ```
+
+3. Check `MONGO_URI` in your configuration
+
+### Bot doesn't respond to commands
+
+1. Ensure you've published commands:
+   ```bash
+   npm run commands
+   ```
+
+2. Verify intents are enabled in Discord Developer Portal
+
+3. Check bot permissions in your server
+
+### Permission errors
+
+```bash
+# Fix file permissions
+chmod +x bastion.sh
+chmod -R 755 data
+```
+
+### Build errors
+
+Ensure you're using Node.js LTS:
+```bash
+node --version  # Should be v18.x or higher
+```
+
+## Production Best Practices
+
+<Steps>
+  <Step title="Use a process manager">
+    Always use PM2 or systemd in production to ensure automatic restarts.
+  </Step>
+
+  <Step title="Enable logging">
+    ```bash
+    # PM2 automatically manages logs
+    pm2 logs bastion
+
+    # Or redirect to files
+    npm start > logs/output.log 2> logs/error.log
+    ```
+  </Step>
+
+  <Step title="Set up monitoring">
+    ```bash
+    # PM2 monitoring
+    pm2 monit
+
+    # Or use PM2 Plus for advanced monitoring
+    pm2 plus
+    ```
+  </Step>
+
+  <Step title="Regular backups">
+    Back up your:
+    - MongoDB database
+    - `data` directory
+    - `settings.yaml` or `.env`
+    - Custom locales (if any)
+  </Step>
+
+  <Step title="Security">
+    - Never commit `.env` or `settings.yaml` to version control
+    - Use environment variables for sensitive data
+    - Keep dependencies updated: `npm audit` and `npm update`
+    - Restrict `unsafeMode` in production
+  </Step>
+
+  <Step title="Resource monitoring">
+    Monitor CPU, memory, and disk usage:
+    ```bash
+    pm2 monit              # PM2 monitoring
+    htop                   # System monitoring
+    df -h                  # Disk usage
+    ```
+  </Step>
+</Steps>
+
+## Firewall Configuration
+
+If you're enabling the Bastion API server, allow the configured port:
+
+<CodeGroup>
+
+```bash UFW (Ubuntu)
+sudo ufw allow 8377/tcp
+```
+
+```bash firewalld (CentOS/RHEL)
+sudo firewall-cmd --permanent --add-port=8377/tcp
+sudo firewall-cmd --reload
+```
+
+</CodeGroup>
+
+<Warning>
+  Only expose the API port if you need external access. Always use authentication (`auth` in settings.yaml).
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Docker Deployment" icon="docker" href="/deployment/docker">
+    Deploy with Docker for easier management
+  </Card>
+  <Card title="Sharding" icon="server" href="/deployment/sharding">
+    Scale Bastion across multiple servers
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/settings">
+    Customize Bastion's features and behavior
+  </Card>
+  <Card title="Commands" icon="terminal" href="/commands/overview">
+    Learn about available commands
+  </Card>
+</CardGroup>

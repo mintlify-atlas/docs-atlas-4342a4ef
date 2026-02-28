@@ -1,0 +1,195 @@
+---
+title: Giveaway Command
+description: Run exciting giveaways in your Discord server with automatic winner selection and customizable duration.
+---
+
+The giveaway command allows server managers to host giveaways with automatic participant tracking and random winner selection. Members participate by reacting to the giveaway message, and Bastion handles the rest.
+
+## Creating a Giveaway
+
+```bash
+/giveaway title:Discord Nitro description:React with 🎉 to enter! winners:1 timer:48
+```
+
+<Note>
+  Requires the **Manage Server** permission to create giveaways.
+</Note>
+
+## Parameters
+
+<ParamField path="title" type="string" required>
+  The title for the giveaway. This is what you're giving away (e.g., "Discord Nitro", "Gaming PC", "$50 Steam Gift Card").
+</ParamField>
+
+<ParamField path="description" type="string">
+  The description for the giveaway. Use this to provide details, rules, or instructions for participants.
+  
+  If not provided, Bastion will display default instructions telling members to react with 🎉 to participate.
+</ParamField>
+
+<ParamField path="winners" type="integer" default="1">
+  The number of winners for the giveaway. Must be a positive integer.
+  
+  Examples:
+  - `1` - Single winner
+  - `3` - Three winners
+  - `10` - Ten winners
+</ParamField>
+
+<ParamField path="timer" type="integer">
+  Number of hours the giveaway should run before automatically ending. Must be between 1 and 720 hours (30 days).
+  
+  <Note>
+    Timer limits and the number of simultaneous timed giveaways depend on your [Bastion Premium tier](/premium).
+  </Note>
+</ParamField>
+
+## How It Works
+
+1. **Giveaway Creation**: When you create a giveaway, Bastion posts an embed with the giveaway details
+2. **Automatic Reaction**: Bastion automatically adds a 🎉 reaction to the message
+3. **Member Participation**: Server members participate by clicking the 🎉 reaction
+4. **Winner Selection**: When the giveaway ends, Bastion randomly selects the specified number of winners from all participants
+5. **Manual End**: The giveaway creator can end it early using the "End Giveaway" button
+6. **Auto-End**: If a timer is set, the giveaway automatically ends after the specified duration
+
+## Example Usage
+
+<Tabs>
+  <Tab title="Simple Giveaway">
+    ```bash
+    /giveaway title:Discord Nitro
+    ```
+    
+    Creates a basic giveaway with default settings (1 winner, no timer).
+  </Tab>
+  
+  <Tab title="With Description">
+    ```bash
+    /giveaway title:Premium Server Boost description:Win a 3-month server boost! Must be an active member to win. winners:1
+    ```
+    
+    Creates a giveaway with custom description and rules.
+  </Tab>
+  
+  <Tab title="Multiple Winners">
+    ```bash
+    /giveaway title:Steam Gift Cards description:Giving away $25 Steam cards! winners:5 timer:72
+    ```
+    
+    Creates a giveaway with 5 winners that runs for 72 hours (3 days).
+  </Tab>
+  
+  <Tab title="Timed Giveaway">
+    ```bash
+    /giveaway title:Gaming Mouse description:High-quality gaming mouse from Razer winners:1 timer:24
+    ```
+    
+    Creates a giveaway that automatically ends after 24 hours.
+  </Tab>
+  
+  <Tab title="Large Giveaway">
+    ```bash
+    /giveaway title:Server Anniversary Celebration description:Thank you for being part of our community! Multiple winners will be selected. winners:10 timer:168
+    ```
+    
+    Creates a week-long giveaway (168 hours) with 10 winners.
+  </Tab>
+</Tabs>
+
+## Giveaway Display
+
+Giveaways are displayed as an embed with:
+- **Author**: "GIVEAWAY!" label at the top
+- **Title**: The giveaway prize/title
+- **Description**: Custom description or default participation instructions
+- **Footer**: Number of winners (e.g., "1 Winner" or "5 Winners")
+- **Timestamp**: (Timed giveaways only) Shows when the giveaway will end
+- **Reaction**: 🎉 emoji for participation
+- **Button**: "End Giveaway" button for manual termination
+
+## Managing Giveaways
+
+### Ending a Giveaway Manually
+
+Click the **End Giveaway** button on the giveaway message. This button is only accessible to members with the Manage Server permission.
+
+When a giveaway ends:
+- Bastion randomly selects the specified number of winners from all participants
+- Winners are announced in the same channel
+- If there are fewer participants than winners, all participants win
+
+### Viewing Participants
+
+To see how many members have entered, check the 🎉 reaction count on the giveaway message. Each reaction represents one participant.
+
+### Rerolling Winners
+
+If you need to select new winners (e.g., if a winner doesn't respond), you'll need to create a new giveaway or manually select from the participants.
+
+## Premium Features
+
+Giveaway timer duration and simultaneous timed giveaways are limited based on your Bastion Premium tier:
+
+| Feature | Free | Premium Tiers |
+|---------|------|---------------|
+| Maximum giveaway duration | Limited | Up to 720 hours (30 days) |
+| Simultaneous timed giveaways | Limited | Increased limit based on tier |
+
+<Note>
+  If you try to exceed your tier's limits, Bastion will notify you about upgrading to a higher tier.
+</Note>
+
+## Best Practices
+
+### Title Guidelines
+- Be specific about what you're giving away
+- Keep it concise and exciting
+- Examples: "Discord Nitro", "$50 Amazon Gift Card", "Custom Bot Setup"
+
+### Description Guidelines
+- Clearly state any participation requirements
+- Include rules or eligibility criteria
+- Mention when and how winners will be contacted
+- Add details about the prize
+
+### Duration Recommendations
+- **Short giveaways (1-6 hours)**: Good for active community events
+- **Medium giveaways (24-72 hours)**: Most common, gives everyone a chance
+- **Long giveaways (7+ days)**: Major prizes or special events
+
+### Winner Selection
+- Set a realistic number of winners based on prize value and community size
+- For expensive prizes, typically 1-3 winners
+- For small prizes or community appreciation, 5-10+ winners can build excitement
+
+## Common Use Cases
+
+- **Server Milestones**: Celebrate reaching member count goals
+- **Partnerships**: Promote partner servers or content creators
+- **Community Engagement**: Reward active members
+- **Special Events**: Holiday celebrations, anniversaries
+- **Content Promotion**: Reward followers or viewers
+
+## Limitations
+
+- Timer range: 1-720 hours (if using timed giveaways)
+- Only members with Manage Server permission can create and end giveaways
+- Timed giveaway limits apply based on your Premium tier
+- Participants must be able to react to messages (reaction permissions)
+- Winners are selected randomly from all participants who reacted with 🎉
+
+## Technical Details
+
+Giveaway data is stored in the database with:
+- Message ID
+- Channel ID
+- Guild ID
+- Number of winners
+- End time (for timed giveaways)
+
+Timed giveaways automatically expire and are cleaned up 10 days after they end.
+
+<Note>
+  Members can participate in giveaways by adding the 🎉 reaction, and can remove themselves by removing their reaction before the giveaway ends.
+</Note>

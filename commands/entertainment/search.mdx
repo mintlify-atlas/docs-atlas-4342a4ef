@@ -1,0 +1,396 @@
+---
+title: Search Commands
+description: Search the web, Wikipedia, weather, anime, manga, games, movies, TV shows, Pokémon, and more with Bastion's comprehensive search commands.
+---
+
+Bastion provides powerful search capabilities across multiple platforms and databases. From web searches to entertainment databases, find information quickly without leaving Discord.
+
+## /web
+
+Search the web using AI-powered search with Tavily API.
+
+<ParamField path="query" type="string" required>
+  The search query you want to search for.
+</ParamField>
+
+<ParamField path="freshness" type="choice">
+  Specifies the time range for search results.
+  - `Past day` (d)
+  - `Past week` (w)
+  - `Past month` (m)
+  - `Past year` (y)
+</ParamField>
+
+<ParamField path="topic" type="choice">
+  Specifies the category of the search.
+  - `General` - General web search
+  - `News` - News articles
+  - `Finance` - Financial information
+</ParamField>
+
+### Usage Examples
+
+```bash
+# Basic web search
+/web query: What is the capital of France
+
+# Recent news search
+/web query: technology trends freshness: w topic: news
+
+# Financial information
+/web query: stock market trends freshness: d topic: finance
+```
+
+### Response
+
+Provides:
+- AI-generated answer summarizing results
+- List of sources with titles and links
+- Response time and number of sources
+
+<Note>
+  Requires `tavilyApiKey` in settings.yaml. Get your API key at [tavily.com](https://www.tavily.com/#pricing)
+</Note>
+
+## /wikipedia
+
+Search Wikipedia for articles and information.
+
+<ParamField path="query" type="string" required>
+  The search query for Wikipedia.
+</ParamField>
+
+### Usage Example
+
+```bash
+/wikipedia query: Discord
+```
+
+### Response
+
+Returns:
+- Article title with clickable link
+- First 10 sentences of the article
+- Automatically follows redirects
+
+## /weather
+
+Get current weather information for any location worldwide.
+
+<ParamField path="location" type="string" required>
+  The location for the weather forecast (city name, zip code, etc.).
+</ParamField>
+
+### Usage Examples
+
+```bash
+/weather location: London
+/weather location: New York, NY
+/weather location: 90210
+```
+
+### Response
+
+Provides detailed weather information:
+- Current condition with icon
+- Temperature (Celsius and Fahrenheit)
+- Feels like temperature
+- High and low temperatures
+- Cloudiness and humidity percentages
+- Wind speed and direction
+- Atmospheric pressure
+- Visibility distance
+- Sunrise and sunset times
+
+<Note>
+  Requires `openWeatherMapApiKey` in settings.yaml. Powered by OpenWeatherMap.
+</Note>
+
+## Entertainment Searches
+
+### /anime
+
+Search for anime information from Kitsu.
+
+<ParamField path="name" type="string" required>
+  The name of the anime.
+</ParamField>
+
+#### Usage Example
+
+```bash
+/anime name: Attack on Titan
+```
+
+#### Response
+
+- Anime title and link to Kitsu
+- Synopsis
+- Airing status (Finished/Airing)
+- Air dates
+- Age rating and NSFW status
+- Poster image
+
+### /manga
+
+Search for manga information from Kitsu.
+
+<ParamField path="name" type="string" required>
+  The name of the manga.
+</ParamField>
+
+#### Usage Example
+
+```bash
+/manga name: One Piece
+```
+
+#### Response
+
+- Manga title and link to Kitsu
+- Synopsis
+- Publishing status (Finished/Publishing)
+- Publication dates
+- Cover image
+
+### /game
+
+Search for video game information from IGDB.
+
+<ParamField path="name" type="string" required>
+  The name of the game.
+</ParamField>
+
+#### Usage Example
+
+```bash
+/game name: The Legend of Zelda
+```
+
+#### Response
+
+- Game title and IGDB link
+- Version information
+- Description/summary
+- Rating
+- Release date
+- Official website links
+- Cover artwork
+
+<Note>
+  Requires `twitch.clientId`, `twitch.clientSecret`, and `twitch.accessToken` in settings.yaml. Powered by Twitch/IGDB API.
+</Note>
+
+### /movie
+
+Search for movie information from The Movie Database (TMDB).
+
+<ParamField path="name" type="string" required>
+  The name of the movie.
+</ParamField>
+
+#### Usage Example
+
+```bash
+/movie name: Inception
+```
+
+#### Response
+
+- Movie title and TMDB link
+- Overview/synopsis
+- Genres
+- Original language
+- Rating
+- Release date
+- Poster or backdrop image
+
+<Info>
+  Adult content is filtered in non-NSFW channels.
+</Info>
+
+<Note>
+  Requires `tmdbApiKey` in settings.yaml.
+</Note>
+
+### /tv
+
+Search for TV show information from The Movie Database (TMDB).
+
+<ParamField path="name" type="string" required>
+  The name of the TV show.
+</ParamField>
+
+#### Usage Example
+
+```bash
+/tv name: Breaking Bad
+```
+
+#### Response
+
+- TV show title and TMDB link
+- Overview/synopsis
+- Genres
+- Original language
+- Rating
+- First air date
+- Poster or backdrop image
+
+<Info>
+  Adult content is filtered in non-NSFW channels.
+</Info>
+
+<Note>
+  Requires `tmdbApiKey` in settings.yaml.
+</Note>
+
+### /pokemon
+
+Search for Pokémon information from the PokéDex API.
+
+<ParamField path="name" type="string" required>
+  The name or number of the Pokémon.
+</ParamField>
+
+#### Usage Examples
+
+```bash
+# Search by name
+/pokemon name: Pikachu
+
+# Search by number
+/pokemon name: 25
+```
+
+#### Response
+
+Provides comprehensive Pokémon data:
+- Pokémon name and species
+- Pokédex number
+- Generation
+- Types
+- Abilities
+- Egg groups
+- Gender ratio
+- Height and weight
+- Sprite image
+
+<Info>
+  Includes Ultra Beast detection based on codename presence.
+</Info>
+
+## Reference & Information
+
+### /cryptocurrency
+
+Get information about cryptocurrencies.
+
+<ParamField path="symbol" type="string" required>
+  The symbol of the cryptocurrency (e.g., BTC, ETH, DOGE).
+</ParamField>
+
+#### Usage Example
+
+```bash
+/cryptocurrency symbol: BTC
+```
+
+#### Response
+
+- Full name and symbol
+- Description
+- Logo
+- Date added to CoinMarketCap
+
+<Note>
+  Requires `coinMarketCapApiKey` in settings.yaml. Powered by CoinMarketCap.
+</Note>
+
+### /definitions
+
+Get dictionary definitions for any word.
+
+<ParamField path="word" type="string" required>
+  The word you want to look up.
+</ParamField>
+
+#### Usage Example
+
+```bash
+/definitions word: serendipity
+```
+
+#### Response
+
+- Up to 3 definitions
+- Part of speech for each definition
+- Uses canonical forms when available
+
+<Note>
+  Requires `wordnikApiKey` in settings.yaml. Powered by Wordnik.
+</Note>
+
+### /urban-dictionary
+
+Search Urban Dictionary for slang and informal definitions.
+
+<ParamField path="word" type="string" required>
+  The word you want to look up.
+</ParamField>
+
+#### Usage Example
+
+```bash
+/urban-dictionary word: yeet
+```
+
+#### Response
+
+- Word and Urban Dictionary link
+- Top-voted definition
+- Vote count (upvotes - downvotes)
+
+### /apod
+
+Display NASA's Astronomy Picture of the Day.
+
+#### Usage Example
+
+```bash
+/apod
+```
+
+#### Response
+
+- Picture title with HD link
+- Detailed explanation
+- High-resolution image
+
+<Note>
+  Requires `nasaApiKey` in settings.yaml (default: `DEMO_KEY`). Powered by NASA.
+</Note>
+
+---
+
+## API Key Configuration
+
+Many search commands require API keys. Configure them in your `settings.yaml`:
+
+```yaml
+# Search Commands
+tavilyApiKey: "your_tavily_key"
+openWeatherMapApiKey: "your_openweathermap_key"
+tmdbApiKey: "your_tmdb_key"
+wordnikApiKey: "your_wordnik_key"
+nasaApiKey: "DEMO_KEY"
+coinMarketCapApiKey: "your_coinmarketcap_key"
+
+# Game search (IGDB via Twitch)
+twitch:
+  clientId: "your_client_id"
+  clientSecret: "your_client_secret"
+  accessToken: "your_access_token"
+```
+
+See the [API Keys Configuration](/configuration/api-keys) guide for detailed setup instructions.

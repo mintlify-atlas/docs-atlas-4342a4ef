@@ -1,0 +1,689 @@
+---
+title: Installation
+description: Complete guide to installing Bastion and all required dependencies
+---
+
+# Installation
+
+This guide provides detailed instructions for installing Bastion and all required dependencies on your system.
+
+## System requirements
+
+Before installing Bastion, ensure your system meets these requirements:
+
+- **Operating System**: Linux, macOS, or Windows
+- **Node.js**: Version 18.x or higher (LTS recommended)
+- **MongoDB**: Version 4.0 or higher
+- **Memory**: Minimum 512MB RAM (1GB+ recommended for music features)
+- **Storage**: At least 500MB free space
+- **FFmpeg**: Required for music playback features (optional)
+
+## Step 1: Install Node.js
+
+Bastion requires Node.js 18 or higher. Choose your installation method:
+
+<Tabs>
+  <Tab title="Linux (Ubuntu/Debian)">
+    Install Node.js using NodeSource repository:
+    
+    ```bash
+    # Update package list
+    sudo apt update
+    
+    # Install Node.js 20 LTS
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt install -y nodejs
+    
+    # Verify installation
+    node --version
+    npm --version
+    ```
+  </Tab>
+  
+  <Tab title="macOS">
+    Install using Homebrew:
+    
+    ```bash
+    # Install Homebrew if not already installed
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    
+    # Install Node.js
+    brew install node@20
+    
+    # Verify installation
+    node --version
+    npm --version
+    ```
+    
+    Alternatively, download from [nodejs.org](https://nodejs.org/).
+  </Tab>
+  
+  <Tab title="Windows">
+    Download and install from [nodejs.org](https://nodejs.org/):
+    
+    1. Download the Windows Installer (.msi) for Node.js 20 LTS
+    2. Run the installer and follow the setup wizard
+    3. Restart your terminal/command prompt
+    4. Verify installation:
+    
+    ```cmd
+    node --version
+    npm --version
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+Bastion is built with ES modules and requires Node.js 18+ for compatibility.
+</Note>
+
+## Step 2: Install MongoDB
+
+Bastion uses MongoDB to store server configurations, user data, and more.
+
+<Tabs>
+  <Tab title="Linux (Ubuntu/Debian)">
+    Install MongoDB Community Edition:
+    
+    ```bash
+    # Import MongoDB public GPG key
+    curl -fsSL https://pgp.mongodb.com/server-7.0.asc | \
+       sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+    
+    # Add MongoDB repository
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" | \
+       sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+    
+    # Update package list and install
+    sudo apt update
+    sudo apt install -y mongodb-org
+    
+    # Start MongoDB
+    sudo systemctl start mongod
+    sudo systemctl enable mongod
+    
+    # Verify MongoDB is running
+    sudo systemctl status mongod
+    ```
+  </Tab>
+  
+  <Tab title="macOS">
+    Install using Homebrew:
+    
+    ```bash
+    # Tap MongoDB repository
+    brew tap mongodb/brew
+    
+    # Install MongoDB
+    brew install mongodb-community
+    
+    # Start MongoDB service
+    brew services start mongodb-community
+    
+    # Verify installation
+    mongosh --eval 'db.runCommand({ connectionStatus: 1 })'
+    ```
+  </Tab>
+  
+  <Tab title="Windows">
+    Install MongoDB Community Edition:
+    
+    1. Download MongoDB installer from [mongodb.com](https://www.mongodb.com/try/download/community)
+    2. Run the .msi installer
+    3. Choose "Complete" installation
+    4. Install MongoDB as a Windows Service
+    5. Install MongoDB Compass (optional GUI)
+    
+    Verify installation:
+    
+    ```cmd
+    mongosh --eval "db.version()"
+    ```
+  </Tab>
+  
+  <Tab title="Docker">
+    Run MongoDB in a Docker container:
+    
+    ```bash
+    # Pull MongoDB image
+    docker pull mongo:latest
+    
+    # Run MongoDB container
+    docker run -d \
+      --name mongodb \
+      -p 27017:27017 \
+      -v mongodb_data:/data/db \
+      mongo:latest
+    
+    # Verify container is running
+    docker ps | grep mongodb
+    ```
+    
+    <Warning>
+    If using Docker for MongoDB with Bastion running locally, use `host.docker.internal:27017` instead of `127.0.0.1:27017` in your MongoDB URI.
+    </Warning>
+  </Tab>
+</Tabs>
+
+<Info>
+The default MongoDB connection URI is `mongodb://127.0.0.1:27017/bastion`. You can customize this in your settings.
+</Info>
+
+## Step 3: Install FFmpeg (optional)
+
+FFmpeg is required for Bastion's music playback features. Skip this step if you don't plan to use music commands.
+
+<Tabs>
+  <Tab title="Linux (Ubuntu/Debian)">
+    ```bash
+    sudo apt update
+    sudo apt install -y ffmpeg
+    
+    # Verify installation
+    ffmpeg -version
+    ```
+  </Tab>
+  
+  <Tab title="macOS">
+    ```bash
+    brew install ffmpeg
+    
+    # Verify installation
+    ffmpeg -version
+    ```
+  </Tab>
+  
+  <Tab title="Windows">
+    1. Download FFmpeg from [ffmpeg.org](https://ffmpeg.org/download.html)
+    2. Extract the archive
+    3. Add the `bin` folder to your system PATH
+    4. Restart your terminal
+    5. Verify: `ffmpeg -version`
+    
+    Or use Chocolatey:
+    
+    ```cmd
+    choco install ffmpeg
+    ```
+  </Tab>
+</Tabs>
+
+## Step 4: Create Discord application
+
+Follow these steps to create a Discord bot application:
+
+<Steps>
+  <Step title="Access Discord Developer Portal">
+    Go to [https://discord.com/developers/applications](https://discord.com/developers/applications) and log in.
+  </Step>
+  
+  <Step title="Create new application">
+    Click **New Application** in the top right.
+    
+    Enter a name for your application (e.g., "Bastion") and click **Create**.
+  </Step>
+  
+  <Step title="Note your Application ID">
+    In the **General Information** section, copy your **Application ID** (Client ID).
+    
+    You'll need this for the `id` field in your settings.
+  </Step>
+  
+  <Step title="Create bot user">
+    Navigate to the **Bot** section in the left sidebar.
+    
+    Click **Add Bot** and confirm.
+  </Step>
+  
+  <Step title="Configure bot settings">
+    Under **Privileged Gateway Intents**, enable:
+    
+    - **Presence Intent** (required)
+    - **Server Members Intent** (required)
+    - **Message Content Intent** (required)
+    
+    <Warning>
+    Bastion requires all three privileged intents to function properly. Without these, many features will not work.
+    </Warning>
+  </Step>
+  
+  <Step title="Get bot token">
+    Under the **Token** section, click **Reset Token**.
+    
+    Copy the token that appears - you'll need this for the `token` field in your settings.
+    
+    <Warning>
+    Never share your bot token publicly or commit it to version control. If your token is exposed, reset it immediately in the Developer Portal.
+    </Warning>
+  </Step>
+  
+  <Step title="Optional: Customize bot appearance">
+    Upload a profile picture and add a description for your bot in the **General Information** section.
+  </Step>
+</Steps>
+
+## Step 5: Install Bastion
+
+Now let's download and install Bastion:
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone Bastion from GitHub:
+    
+    ```bash
+    git clone https://github.com/TheBastionBot/Bastion.git
+    cd Bastion
+    ```
+    
+    <Info>
+    Make sure you have Git installed. On most Linux distributions and macOS, Git comes pre-installed. For Windows, download from [git-scm.com](https://git-scm.com/).
+    </Info>
+  </Step>
+  
+  <Step title="Install dependencies">
+    Install all required Node.js packages:
+    
+    ```bash
+    npm install
+    ```
+    
+    This will install:
+    - Discord.js for Discord API integration
+    - Bastion Tesseract framework
+    - AI SDKs (OpenAI, Google Gemini, Anthropic)
+    - Music playback libraries
+    - Database utilities
+    - And more (see package.json:31)
+    
+    <Note>
+    The installation may take several minutes depending on your internet connection and system performance.
+    </Note>
+  </Step>
+  
+  <Step title="Build the project">
+    Compile TypeScript source code to JavaScript:
+    
+    ```bash
+    npm run build
+    ```
+    
+    This creates the `dist` directory with compiled files.
+  </Step>
+</Steps>
+
+## Step 6: Configure Bastion
+
+Bastion can be configured using a YAML settings file or environment variables.
+
+### Option A: Using settings.yaml (recommended)
+
+<Steps>
+  <Step title="Copy example settings">
+    ```bash
+    cp settings.example.yaml settings.yaml
+    ```
+  </Step>
+  
+  <Step title="Edit settings.yaml">
+    Open `settings.yaml` in your preferred text editor:
+    
+    ```yaml settings.yaml
+    # Bot ID (Application ID from Discord Developer Portal)
+    id: "YOUR_APPLICATION_ID"
+    
+    # Bot Token from Discord Developer Portal
+    token: "YOUR_BOT_TOKEN"
+    
+    # Bot Owners (Your Discord User ID)
+    owners:
+      - "YOUR_USER_ID"
+    
+    # MongoDB connection URI
+    mongoURI: "mongodb://127.0.0.1:27017/bastion"
+    
+    # Bot presence/status settings
+    presences:
+    - status: "online"
+      activity: 3
+      name: "the server"
+      url:
+    
+    # Enable music activity updates
+    musicActivity: true
+    
+    # Relay direct messages to bot owner
+    relayDirectMessages: false
+    
+    # Enable unsafe commands (exec, eval)
+    unsafeMode: false
+    
+    # API server settings
+    port: 8377
+    auth: "your-api-auth-token"
+    ```
+  </Step>
+  
+  <Step title="Get your Discord User ID">
+    To find your User ID:
+    
+    1. Open Discord and go to **User Settings** > **Advanced**
+    2. Enable **Developer Mode**
+    3. Right-click your username anywhere and select **Copy User ID**
+    4. Paste this into the `owners` array in settings.yaml
+  </Step>
+</Steps>
+
+### Option B: Using environment variables
+
+<Steps>
+  <Step title="Copy example .env file">
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+  
+  <Step title="Edit .env file">
+    ```bash .env
+    # Required settings
+    BOT_ID=YOUR_APPLICATION_ID
+    BOT_TOKEN=YOUR_BOT_TOKEN
+    OWNER_ID=YOUR_USER_ID
+    MONGO_URI=mongodb://127.0.0.1:27017/bastion
+    
+    # Optional settings
+    UNSAFE_MODE=FALSE
+    BASTION_MUSIC_ACTIVITY=TRUE
+    BASTION_RELAY_DMS=FALSE
+    BASTION_API_PORT=8377
+    ```
+  </Step>
+</Steps>
+
+<Note>
+Environment variables take precedence over settings.yaml values. You can use a combination of both - put common settings in settings.yaml and sensitive credentials in .env.
+</Note>
+
+### Configuration options explained
+
+| Setting | Description | Required |
+|---------|-------------|----------|
+| `id` | Discord Application ID | Yes |
+| `token` | Discord Bot Token | Yes |
+| `owners` | Array of Discord User IDs with owner privileges | Yes |
+| `mongoURI` | MongoDB connection string | Yes |
+| `presences` | Array of bot status/activity configurations | No |
+| `musicActivity` | Update activity to show currently playing music | No |
+| `relayDirectMessages` | Forward DMs to bot owner | No |
+| `unsafeMode` | Enable exec/eval commands (dangerous!) | No |
+| `port` | Port for Bastion API server | No |
+| `auth` | Authentication token for API server | No |
+
+<Warning>
+Never enable `unsafeMode` unless you are the sole owner and fully understand the security implications. The exec and eval commands allow arbitrary code execution.
+</Warning>
+
+## Step 7: Configure API keys (optional)
+
+Bastion supports various third-party integrations. Add API keys to settings.yaml for these features:
+
+```yaml settings.yaml
+# OpenAI ChatGPT (for /chat command)
+openai:
+  apiKey: "sk-..."
+  model: "gpt-4o-mini"
+  maxTokens: 100
+
+# Google Gemini (for /chat command)
+gemini:
+  apiKey: "..."
+  model: "gemini-2.0-flash-exp"
+  maxOutputTokens: 256
+
+# Anthropic Claude (for /chat command)
+anthropic:
+  apiKey: "sk-ant-..."
+  model: "claude-3-5-haiku-latest"
+  maxTokens: 128
+
+# Other API keys
+coinMarketCapApiKey: ""  # For /cryptocurrency command
+nasaApiKey: "DEMO_KEY"   # For /apod command
+openWeatherMapApiKey: "" # For /weather command
+tmdbApiKey: ""           # For /movie and /tv commands
+trackerNetworkApiKey: "" # For game stats commands
+wordnikApiKey: ""        # For /definitions command
+
+# Twitch integration
+twitch:
+  clientId: ""
+  clientSecret: ""
+  accessToken: ""
+
+# Ubisoft (for Rainbow Six Siege stats)
+ubisoft:
+  email: ""
+  password: ""
+```
+
+<Info>
+All API keys are optional. Commands that require specific API keys will show an error if the key is not configured.
+</Info>
+
+## Step 8: Build and register commands
+
+Bastion uses Discord slash commands which must be registered:
+
+<Steps>
+  <Step title="Generate command definitions">
+    ```bash
+    npm run build:commands
+    ```
+    
+    This creates `commands.json` with all command definitions.
+  </Step>
+  
+  <Step title="Register commands with Discord">
+    ```bash
+    npm run commands
+    ```
+    
+    This publishes commands to Discord's API.
+    
+    <Warning>
+    Global commands can take up to 1 hour to appear in all servers. Be patient after running this command for the first time.
+    </Warning>
+  </Step>
+</Steps>
+
+## Step 9: Start Bastion
+
+You're ready to start Bastion!
+
+<CodeGroup>
+```bash Development
+# Start Bastion (single instance)
+npm start
+```
+
+```bash Production (Linux/macOS)
+# Make the script executable (first time only)
+chmod +x bastion.sh
+
+# Start Bastion
+./bastion.sh --start
+
+# Check status
+./bastion.sh --status
+
+# Stop Bastion
+./bastion.sh --stop
+
+# Restart Bastion
+./bastion.sh --restart
+```
+
+```cmd Production (Windows)
+# Run the Windows launcher
+bastion.cmd
+```
+
+```bash Docker
+# Build the Docker image
+docker build -t bastion .
+
+# Run Bastion container
+docker run -d --name bastion \
+  -v $(pwd)/settings.yaml:/app/settings.yaml \
+  -v $(pwd)/.env:/app/.env \
+  bastion
+
+# View logs
+docker logs -f bastion
+```
+</CodeGroup>
+
+<Note>
+For Docker deployments, if MongoDB is running on your host machine, use `host.docker.internal` instead of `127.0.0.1` in your MongoDB URI (settings.example.yaml:25).
+</Note>
+
+## Step 10: Invite Bastion to your server
+
+Generate an OAuth2 invite URL:
+
+<Steps>
+  <Step title="Create invite URL">
+    Replace `YOUR_APPLICATION_ID` with your actual Application ID:
+    
+    ```
+    https://discord.com/api/oauth2/authorize?client_id=YOUR_APPLICATION_ID&permissions=8&scope=bot%20applications.commands
+    ```
+    
+    This URL grants Administrator permission (8) and both bot and slash command scopes.
+  </Step>
+  
+  <Step title="Authorize the bot">
+    Open the URL in your browser, select your server, and click **Authorize**.
+  </Step>
+  
+  <Step title="Verify bot is online">
+    Check your Discord server - Bastion should appear online in the member list.
+  </Step>
+</Steps>
+
+<Info>
+The permission value `8` grants Administrator access. For production, you may want to use more specific permissions. Use Discord's [Permission Calculator](https://discordapi.com/permissions.html) to generate a custom permission value.
+</Info>
+
+## Verification
+
+Test that everything is working:
+
+1. In Discord, type `/` to see Bastion's slash commands
+2. Run `/about` to see bot information
+3. Run `/status` to check bot health
+4. Check console logs for any errors
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/configuration/overview">
+    Configure Bastion's features and customize behavior
+  </Card>
+  
+  <Card title="Commands" icon="terminal" href="/commands/overview">
+    Learn about all available commands
+  </Card>
+  
+  <Card title="Deployment" icon="server" href="/deployment/overview">
+    Deploy Bastion in production with Docker, PM2, or systemd
+  </Card>
+  
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Common issues and solutions
+  </Card>
+</CardGroup>
+
+## Updating Bastion
+
+To update Bastion to the latest version:
+
+```bash
+# Stop Bastion
+./bastion.sh --stop
+
+# Pull latest changes
+git pull origin main
+
+# Install new dependencies
+npm install
+
+# Rebuild
+npm run build
+
+# Update commands
+npm run build:commands
+npm run commands
+
+# Start Bastion
+./bastion.sh --start
+```
+
+Or use the built-in update command:
+
+```bash
+./bastion.sh --update
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="npm install fails with permission errors">
+    Don't use sudo with npm. If you have permission issues:
+    
+    ```bash
+    # Fix npm permissions
+    mkdir ~/.npm-global
+    npm config set prefix '~/.npm-global'
+    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+    source ~/.bashrc
+    ```
+  </Accordion>
+  
+  <Accordion title="Cannot connect to MongoDB">
+    - Verify MongoDB is running: `sudo systemctl status mongod`
+    - Check the connection URI in your settings
+    - Ensure MongoDB is listening on the correct port (default 27017)
+    - Check firewall rules if MongoDB is on a different machine
+  </Accordion>
+  
+  <Accordion title="Bot shows offline after starting">
+    - Check console for errors
+    - Verify bot token is correct
+    - Ensure all privileged intents are enabled
+    - Check your internet connection
+    - Verify MongoDB connection is working
+  </Accordion>
+  
+  <Accordion title="Commands don't appear in Discord">
+    - Run `npm run build:commands && npm run commands`
+    - Wait up to 1 hour for global commands to propagate
+    - Ensure bot was invited with `applications.commands` scope
+    - Try kicking and re-inviting the bot
+  </Accordion>
+  
+  <Accordion title="Music commands don't work">
+    - Install FFmpeg (see Step 3)
+    - Verify FFmpeg is in your system PATH: `ffmpeg -version`
+    - Check console for audio-related errors
+    - Ensure bot has permission to connect to voice channels
+  </Accordion>
+</AccordionGroup>
+
+## Getting help
+
+If you encounter issues:
+
+- Review the [Troubleshooting guide](/troubleshooting)
+- Check [GitHub Issues](https://github.com/TheBastionBot/Bastion/issues)
+- Join [Bastion HQ Discord](https://discord.gg/fzx8fkt) for support
+- Enable debug mode: `./bastion.sh --debug`

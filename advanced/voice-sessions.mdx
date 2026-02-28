@@ -1,0 +1,322 @@
+---
+title: Voice Sessions
+description: Automated voice channel creation and management system for Discord servers
+---
+
+Voice Sessions is a premium feature that automatically creates temporary voice channels on demand. When users join a special "actuator" channel, Bastion creates a new private voice channel for them with full control over access and settings.
+
+## Overview
+
+Voice Sessions provide dynamic voice channels that:
+
+- Automatically create when users join the actuator channel
+- Give channel creators full control over their session
+- Automatically delete when empty
+- Support custom user limits and permissions
+
+<Warning>
+  Voice Sessions is a premium-only feature. Your server owner must have an active Bastion premium subscription to use this functionality (voiceSessions.ts:34-36).
+</Warning>
+
+## Setup
+
+<Steps>
+  <Step title="Check Premium Status">
+    Ensure your server owner has an active Bastion premium subscription.
+  </Step>
+  
+  <Step title="Create Voice Session Category">
+    Run the command to create a new voice session category:
+    
+    ```bash
+    /voice-sessions create:Gaming Sessions
+    ```
+    
+    This creates a new category with an actuator channel named "➕ Voice Session".
+  </Step>
+  
+  <Step title="Join the Actuator Channel">
+    Users join the "➕ Voice Session" channel to automatically create their own voice channel.
+  </Step>
+  
+  <Step title="Manage Your Session">
+    Use the control buttons in the voice channel to lock, unlock, or end your session.
+  </Step>
+</Steps>
+
+## How It Works
+
+### Category Creation
+
+When you create a voice session category, Bastion:
+
+1. **Creates a new category** with restricted permissions:
+   - Everyone can send messages and speak
+   - ViewChannel, Connect, and other permissions are denied by default
+
+2. **Creates an actuator channel** named "➕ Voice Session":
+   - Everyone can view and connect
+   - Speaking and messaging are disabled
+
+```typescript
+// Permission structure (voiceSessions.ts:50-66)
+permissionOverwrites: [
+  {
+    id: guildId,
+    allow: [ SendMessages, Speak ],
+    deny: [
+      AddReactions,
+      Connect,
+      CreateInstantInvite,
+      UseApplicationCommands,
+      ViewChannel,
+    ],
+  },
+]
+```
+
+### Automatic Channel Creation
+
+When a user joins the actuator channel (voiceStateUpdate.ts:40-104):
+
+1. **New channel is created** with a personalized name:
+   - Format: `{DisplayName}'s Voice Session` or `{DisplayName}s' Voice Session`
+   - Bitrate adjusted based on server boost level
+
+2. **Permissions are configured**:
+   - **Channel creator** gets full control (Connect, CreateInstantInvite, MoveMembers, MuteMembers, ViewChannel)
+   - **Everyone else** cannot view or join by default
+
+3. **User is moved** to the new channel automatically
+
+4. **Control message is sent** with Lock, Unlock, and End buttons
+
+### Bitrate Configuration
+
+Channel bitrate is automatically optimized based on your server's boost level:
+
+```typescript
+// Bitrate calculation (voiceStateUpdate.ts:45)
+bitrate: guild.premiumTier ? guild.premiumTier * 128e3 : 96e3
+```
+
+| Boost Level | Bitrate |
+|-------------|----------|
+| No Boost | 96 kbps |
+| Level 1 | 128 kbps |
+| Level 2 | 256 kbps |
+| Level 3 | 384 kbps |
+
+### Automatic Cleanup
+
+Voice channels are automatically deleted when:
+
+- All members leave the channel
+- The channel is not the actuator channel (doesn't start with "➕")
+- The bot has permission to delete the channel
+
+```typescript
+// Auto-deletion logic (voiceStateUpdate.ts:35-36)
+if (oldState.channel.members.size === 0 && oldState.channel.deletable) {
+  await oldState.channel.delete("Voice session automatically ended.");
+}
+```
+
+## Session Controls
+
+Every voice session includes a control panel with three buttons:
+
+### Lock Button
+
+Prevents new users from joining or viewing the channel:
+
+```typescript
+// Lock functionality (VoiceSessionLockButton.ts:22-25)
+channel.permissionOverwrites.edit(guildId, {
+  Connect: false,
+  ViewChannel: false,
+});
+```
+
+<Info>
+  The Lock button requires the user to have the `Move Members` permission (VoiceSessionLockButton.ts:16).
+</Info>
+
+### Unlock Button
+
+Allows users to view and join the channel:
+
+```typescript
+// Unlock functionality (VoiceSessionUnlockButton.ts:22-25)
+channel.permissionOverwrites.edit(guildId, {
+  Connect: true,
+  ViewChannel: true,
+});
+```
+
+### End Button
+
+Manually deletes the voice channel and ends the session:
+
+```typescript
+// End functionality (VoiceSessionEndButton.ts:22)
+await channel.delete("Voice session manually ended.");
+```
+
+<Warning>
+  All members in the channel will be disconnected when the End button is clicked. This action cannot be undone.
+</Warning>
+
+## Configuration Options
+
+### View Active Voice Sessions
+
+List all voice session categories in your server:
+
+```bash
+/voice-sessions
+```
+
+This displays all active voice session categories.
+
+### Multiple Categories
+
+You can create multiple voice session categories for different purposes:
+
+```bash
+/voice-sessions create:Gaming Sessions
+/voice-sessions create:Study Rooms
+/voice-sessions create:Music Practice
+```
+
+Each category maintains its own independent set of voice channels.
+
+### User Limits
+
+Configure default user limits for voice sessions:
+
+```typescript
+// Database field (Guild.ts:58, 210-212)
+voiceSessionUserLimit?: number;
+```
+
+<Note>
+  The user limit configuration is stored in the database but must be set programmatically. This feature allows you to limit how many users can join a voice session.
+</Note>
+
+## Database Schema
+
+Voice session configuration is stored in the Guild model:
+
+```typescript
+interface Guild {
+  voiceSessionCategories?: string[];  // Array of category IDs
+  voiceSessionUserLimit?: number;     // Optional user limit per channel
+}
+```
+
+## Permissions Required
+
+### User Permissions
+
+- **Setup**: `Manage Server` (ManageGuild) - Required to create voice session categories
+- **Control Buttons**: `Move Members` - Required to lock, unlock, or end sessions
+
+### Bot Permissions
+
+- `Manage Channels` - Required to create and delete voice channels
+- `Move Members` - Required to move users to newly created channels
+
+## Technical Details
+
+### Event Handling
+
+The voice session system is driven by the `voiceStateUpdate` event:
+
+```typescript
+// Event listener (voiceStateUpdate.ts:22-23)
+public async exec(oldState: VoiceState, newState: VoiceState): Promise<void> {
+  if (oldState.channelId === newState.channelId) return;
+  // ... processing logic
+}
+```
+
+The system only processes when users switch channels (not on mute/unmute events).
+
+### Concurrency Considerations
+
+<Warning>
+  There is a potential concurrency issue with channel numbering when multiple users join the actuator channel simultaneously (voiceStateUpdate.ts:41). In rare cases, this might result in channel name conflicts.
+</Warning>
+
+### Category Cleanup
+
+Deleted categories are automatically filtered when viewing voice sessions:
+
+```typescript
+// Filter deleted categories (voiceSessions.ts:42)
+guildDocument.voiceSessionCategories = guildDocument.voiceSessionCategories
+  ?.filter(id => interaction.guild.channels.cache.has(id));
+```
+
+## Use Cases
+
+### Gaming Communities
+
+Create dedicated spaces for different game sessions:
+
+- Players create temporary team channels
+- Each team has full control over who can join
+- Channels clean up automatically after the session
+
+### Study Groups
+
+Provide private study rooms for students:
+
+- Students create their own study rooms
+- Lock rooms for focused study time
+- Unlock when looking for collaboration
+
+### Music Practice
+
+Band members or musicians can:
+
+- Create private practice rooms
+- Control who participates in jam sessions
+- Benefit from higher bitrate audio quality
+
+### Event Management
+
+Manage breakout rooms during virtual events:
+
+- Participants create discussion groups
+- Moderators can move members between sessions
+- Automatic cleanup after the event
+
+## Best Practices
+
+1. **Clear naming**: Use descriptive category names that indicate their purpose
+2. **User education**: Explain to your community how voice sessions work
+3. **Moderation**: Ensure moderators have Move Members permission to manage sessions
+4. **Multiple categories**: Create separate categories for different activities
+5. **Monitor usage**: Regularly check that old categories are still needed
+
+## Troubleshooting
+
+### Channel Not Created
+
+- Verify premium subscription is active
+- Check bot has Manage Channels permission
+- Ensure the category isn't at Discord's 50-channel limit
+
+### Cannot Use Control Buttons
+
+- Verify you have Move Members permission
+- Check bot has Manage Channels permission
+- Ensure you're clicking buttons in your own voice session
+
+### Channel Not Deleting
+
+- Verify bot has Manage Channels permission
+- Check if the channel is marked as deletable
+- Ensure all members have left the channel

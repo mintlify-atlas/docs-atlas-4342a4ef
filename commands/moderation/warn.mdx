@@ -1,0 +1,101 @@
+---
+title: Warn Command
+description: Warn server members and add infractions to their server profile with the /warn command
+---
+
+The `/warn` command allows moderators to issue warnings to server members and track infractions on their profile. When a member accumulates a certain number of warnings, automated actions can be triggered based on your server's configuration.
+
+## Usage
+
+```
+/warn user:<user> reason:<reason>
+```
+
+## Parameters
+
+<ParamField path="user" type="User" required>
+  The user you want to warn. This must be a valid server member.
+</ParamField>
+
+<ParamField path="reason" type="String" required>
+  The reason for the warning. This will be recorded in the user's infractions list and displayed in moderation logs.
+</ParamField>
+
+## Required Permissions
+
+<Warning>
+  You need the **Moderate Members** permission to use this command.
+</Warning>
+
+## How It Works
+
+1. **Permission Check**: The command verifies that you have permission to moderate the target member. You cannot warn:
+   - The server owner
+   - Yourself
+   - Members with a higher role than yours
+
+2. **Infraction Added**: The warning reason is added to the member's infractions list in their server profile.
+
+3. **Automated Actions**: Based on the server's infraction thresholds, automated actions may be triggered:
+   - **Timeout**: Member is timed out for 15 minutes when reaching the timeout threshold
+   - **Kick**: Member is kicked from the server when reaching the kick threshold
+   - **Ban**: Member is banned from the server when reaching the ban threshold (all infractions are cleared after ban)
+
+4. **Moderation Log**: A moderation event is logged in the configured moderation log channel (if set up) containing:
+   - User tag and ID
+   - Warning reason
+   - Moderator who issued the warning
+   - Link to the warning message
+
+<Info>
+  Configure infraction thresholds using the `/user infractions` command to automatically timeout, kick, or ban members after a specific number of warnings.
+</Info>
+
+## Examples
+
+### Basic Warning
+
+```
+/warn user:@JohnDoe reason:Spamming in general chat
+```
+
+Issues a warning to JohnDoe for spamming.
+
+### Warning for Multiple Violations
+
+```
+/warn user:@JaneSmith reason:Third instance of offensive language despite previous warnings
+```
+
+Issues a detailed warning documenting repeated violations.
+
+## Viewing Infractions
+
+To view a member's infractions, use:
+
+```
+/user infractions user:<user>
+```
+
+This displays all active warnings for the specified user.
+
+## Managing Infractions
+
+Moderators can remove specific infractions:
+
+```
+/user infractions user:<user> remove:<number>
+```
+
+See the [Infractions documentation](/commands/moderation/infractions) for more details on managing infractions.
+
+## Error Messages
+
+If you cannot warn a user due to insufficient permissions, Bastion will inform you that you don't have permission to warn that member. This typically happens when:
+- The target has a higher role than you
+- The target is the server owner
+- You're trying to warn yourself
+
+<Note>
+  Infractions are tracked per-server. A member's warnings in one server do not carry over to other servers.
+</Note>

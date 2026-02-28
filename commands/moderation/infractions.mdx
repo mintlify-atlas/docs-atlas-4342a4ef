@@ -1,0 +1,203 @@
+---
+title: Infractions System
+description: Configure infraction thresholds and manage user infractions with the /user infractions command
+---
+
+The infractions system allows you to track member violations and automatically enforce moderation actions when specific thresholds are reached. Each warning issued via the `/warn` command is recorded as an infraction.
+
+## Command Usage
+
+```
+/user infractions [timeout:<number>] [kick:<number>] [ban:<number>] [user:<user>] [remove:<number>]
+```
+
+## Parameters
+
+<ParamField path="timeout" type="Integer" default="0">
+  Number of infractions after which a user is automatically timed out for 15 minutes.
+  
+  Minimum value: 1
+</ParamField>
+
+<ParamField path="kick" type="Integer" default="0">
+  Number of infractions after which a user is automatically kicked from the server.
+  
+  Minimum value: 1
+</ParamField>
+
+<ParamField path="ban" type="Integer" default="0">
+  Number of infractions after which a user is automatically banned from the server.
+  
+  Minimum value: 1
+</ParamField>
+
+<ParamField path="user" type="User">
+  The user whose infractions you want to display. When specified, shows all active infractions for that user.
+</ParamField>
+
+<ParamField path="remove" type="Integer">
+  The infraction number you want to remove from the specified user (must be used with the `user` parameter).
+  
+  Minimum value: 1
+</ParamField>
+
+## Required Permissions
+
+<Warning>
+  You need the **Moderate Members** permission to use this command.
+  
+  To configure infraction thresholds (timeout/kick/ban), you need the **Manage Server** permission.
+</Warning>
+
+## Use Cases
+
+### Configuring Infraction Thresholds
+
+Set up automated moderation actions based on infraction count:
+
+```
+/user infractions timeout:3 kick:5 ban:10
+```
+
+This configuration will:
+- Timeout users for 15 minutes after 3 warnings
+- Kick users after 5 warnings
+- Ban users after 10 warnings (and clear all their infractions)
+
+<Info>
+  When a user is banned due to infractions, all their infractions are automatically cleared.
+</Info>
+
+### Viewing Current Thresholds
+
+Run the command without parameters to see current settings:
+
+```
+/user infractions
+```
+
+This displays the current timeout, kick, and ban thresholds for your server.
+
+### Viewing User Infractions
+
+Check all infractions for a specific user:
+
+```
+/user infractions user:@JohnDoe
+```
+
+This displays an embed showing:
+- User's tag and nickname (if any)
+- Numbered list of all infractions with reasons
+- User ID in the footer
+
+### Removing an Infraction
+
+Remove a specific infraction from a user:
+
+```
+/user infractions user:@JohnDoe remove:2
+```
+
+This removes infraction #2 from JohnDoe's record.
+
+<Note>
+  Infractions are numbered starting from 1. When you remove an infraction, the numbers are automatically adjusted.
+</Note>
+
+## How Automated Actions Work
+
+### Timeout
+When a member reaches the timeout threshold:
+- They are automatically timed out for 15 minutes (900,000 milliseconds)
+- The timeout reason will be: "X infractions" (where X is the number of infractions)
+- The infraction remains on their record
+
+### Kick
+When a member reaches the kick threshold:
+- They are automatically kicked from the server (if Bastion has permission)
+- The kick reason will be: "X infractions"
+- Their infractions remain in the database if they rejoin
+
+### Ban
+When a member reaches the ban threshold:
+- They are automatically banned from the server (if Bastion has permission)
+- The ban reason will be: "X infractions"
+- **All their infractions are cleared** from the database
+
+<Warning>
+  Make sure your threshold numbers make sense. For example:
+  - Timeout threshold should be lower than kick threshold
+  - Kick threshold should be lower than ban threshold
+  - Example: timeout:3 kick:5 ban:8
+</Warning>
+
+## Examples
+
+### Progressive Discipline System
+
+```
+/user infractions timeout:2 kick:4 ban:7
+```
+
+Creates a progressive discipline system:
+1. First warning: Just recorded
+2. Second warning: Timed out for 15 minutes
+3. Third warning: Still timed out, infraction recorded
+4. Fourth warning: Kicked from server
+5. Warnings 5-6: If they rejoin, infractions accumulate
+6. Seventh warning: Permanent ban
+
+### View and Clean Up Infractions
+
+```
+# Check user's infractions
+/user infractions user:@Member
+
+# Remove a warning that was issued by mistake
+/user infractions user:@Member remove:1
+```
+
+### Lenient Server Configuration
+
+```
+/user infractions timeout:5 kick:10 ban:15
+```
+
+A more lenient system with higher thresholds for all actions.
+
+## Response Messages
+
+### Configuration Success
+> **Timeout**, **Kick** and **Ban** thresholds have been set to **3**, **5** and **10** warnings, respectively.
+
+### Viewing Thresholds
+> **Timeout**, **Kick** and **Ban** thresholds are set to **3**, **5** and **10** warnings, respectively.
+
+### No Infractions
+> @User has no active infractions.
+
+### Infraction Removed
+> I've removed the **[reason]** infraction from @User.
+
+### Invalid Removal
+> @User only has 2 active infractions.
+
+## Data Storage
+
+Infractions are stored in the Member database model with the following structure:
+
+```typescript
+infractions?: string[];
+```
+
+Each infraction is stored as a string containing the reason provided when the warning was issued.
+
+<Info>
+  Infractions are server-specific. A member's infractions in one server do not affect their standing in other servers.
+</Info>
+
+## Related Commands
+
+- [/warn](/commands/moderation/warn) - Issue warnings and add infractions
+- [/report](/commands/moderation/report) - Report users to moderators

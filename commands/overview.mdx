@@ -1,0 +1,171 @@
+---
+title: Commands Overview
+description: Complete overview of all available Bastion commands organized by category
+---
+
+Bastion provides a comprehensive set of slash commands to manage your Discord server, engage your community, and enhance the user experience. All commands use Discord's native slash command interface for easy discovery and use.
+
+## How to Use Commands
+
+All Bastion commands are slash commands. Simply type `/` in any channel where Bastion has access, and Discord will show you available commands. You can also type `/` followed by a command name to see its options and parameters.
+
+<Note>
+  Commands are organized by category below. Click on any command card to view detailed documentation including parameters, examples, and usage guides.
+</Note>
+
+## Server Management
+
+Commands for managing channels, roles, and server configuration.
+
+<CardGroup cols={2}>
+  <Card title="channel" icon="hashtag" href="/commands/server/channels">
+    Create, delete, update, and view information about server channels
+  </Card>
+  
+  <Card title="role" icon="shield" href="/commands/server/roles">
+    Manage server roles and permissions
+  </Card>
+  
+  <Card title="message" icon="envelope" href="/commands/server/messages">
+    Manage messages in channels
+  </Card>
+</CardGroup>
+
+## Moderation
+
+Commands for moderating your server and managing member behavior.
+
+<CardGroup cols={2}>
+  <Card title="warn" icon="exclamation-triangle" href="/commands/moderation/warn">
+    Warn server members and track infractions
+  </Card>
+  
+  <Card title="infractions" icon="list" href="/commands/moderation/infractions">
+    View and manage member infractions
+  </Card>
+  
+  <Card title="report" icon="flag" href="/commands/moderation/report">
+    Allow members to report issues to moderators
+  </Card>
+</CardGroup>
+
+## Configuration
+
+Commands for configuring Bastion's features and behavior in your server.
+
+<Note>
+  Configuration is done through the `/config` slash command. See [Configuration](/configuration/settings) for detailed setup guides.
+</Note>
+
+## Community Engagement
+
+Commands to build and engage your community.
+
+<CardGroup cols={2}>
+  <Card title="giveaway" icon="gift" href="/commands/community/giveaways">
+    Run giveaways in your server
+  </Card>
+  
+  <Card title="poll" icon="chart-bar" href="/commands/community/polls">
+    Create polls for community voting
+  </Card>
+  
+  <Card title="games" icon="gamepad" href="/commands/community/games">
+    Play interactive games with Bastion
+  </Card>
+</CardGroup>
+
+## Music & Entertainment
+
+Commands for music playback and entertainment.
+
+<CardGroup cols={2}>
+  <Card title="music" icon="music" href="/commands/music/playback">
+    Play music, manage queue, and control playback
+  </Card>
+  
+  <Card title="chat" icon="comments" href="/commands/entertainment/chat">
+    Chat with AI-powered Bastion
+  </Card>
+  
+  <Card title="search" icon="magnifying-glass" href="/commands/entertainment/search">
+    Search for information across various sources
+  </Card>
+  
+  <Card title="game-server" icon="network-wired" href="/commands/utility/game-servers">
+    Query game server information
+  </Card>
+</CardGroup>
+
+## Utility
+
+General utility commands for various tasks.
+
+<CardGroup cols={2}>
+  <Card title="translate" icon="language" href="/commands/utility/translate">
+    Translate text between languages
+  </Card>
+  
+  <Card title="calculate" icon="calculator" href="/commands/utility/calculate">
+    Evaluate mathematical expressions
+  </Card>
+</CardGroup>
+
+## Command Types
+
+<Tabs>
+  <Tab title="Simple Commands">
+    Simple commands perform a single action and may accept parameters. Examples include `/about`, `/calculate`, and `/status`.
+    
+    These commands are straightforward to use and typically provide immediate results.
+  </Tab>
+  
+  <Tab title="Command Groups">
+    Command groups contain multiple related subcommands. For example:
+    - `/channel` includes `create`, `delete`, `info`, and `update` subcommands
+    - `/music` includes `play`, `pause`, `skip`, `queue`, and more
+    - `/config` provides extensive configuration options for all features
+    
+    When using command groups, you'll select a subcommand after typing the main command.
+  </Tab>
+  
+  <Tab title="Context Menus">
+    Some Bastion commands are also available as context menu actions (right-click on messages or users).
+    
+    Context menu commands include:
+    - **Sentiment** - Analyze message sentiment
+    - **Translate** - Translate message content
+  </Tab>
+</Tabs>
+
+## Permission Requirements
+
+<Note>
+  Many commands require specific Discord permissions to function. Bastion will inform you if you lack the necessary permissions to execute a command. Server administrators can configure command permissions through Discord's server settings.
+</Note>
+
+Commands are categorized by their permission requirements:
+
+- **Everyone** - Commands available to all server members
+- **Moderators** - Commands requiring moderation permissions
+- **Administrators** - Commands requiring administrator permissions
+- **Server Owner** - Commands restricted to the server owner
+
+## Next Steps
+
+Explore individual command documentation to learn about:
+- Required and optional parameters
+- Usage examples
+- Permission requirements
+- Configuration options
+- Best practices
+
+<CardGroup cols={2}>
+  <Card title="Getting Started" icon="play" href="/quickstart">
+    Set up Bastion in your server
+  </Card>
+  
+  <Card title="Configuration Guide" icon="wrench" href="/configuration/settings">
+    Configure Bastion features
+  </Card>
+</CardGroup>

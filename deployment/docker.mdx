@@ -1,0 +1,429 @@
+---
+title: Docker Deployment
+description: Deploy Bastion using Docker for a containerized, production-ready setup
+---
+
+Deploy Bastion using Docker for a containerized environment. This method ensures consistent deployments across different systems and simplifies dependency management.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Docker">
+    Install Docker and Docker Compose on your system:
+    - [Docker Desktop](https://www.docker.com/products/docker-desktop) (Windows/macOS)
+    - [Docker Engine](https://docs.docker.com/engine/install/) (Linux)
+  </Step>
+
+  <Step title="MongoDB Setup">
+    Ensure you have access to a MongoDB instance. You can:
+    - Use MongoDB Atlas (cloud-hosted)
+    - Run MongoDB locally
+    - Include MongoDB in your Docker Compose setup
+  </Step>
+
+  <Step title="Discord Bot Application">
+    Create a Discord bot application and obtain:
+    - Bot Client ID
+    - Bot Token
+    - Enable required intents in the Discord Developer Portal
+
+    <Warning>
+      Make sure to enable **Presence Intent**, **Server Members Intent**, and **Message Content Intent** in your Discord application settings.
+    </Warning>
+  </Step>
+</Steps>
+
+## Dockerfile Overview
+
+Bastion uses a multi-stage Docker build for optimized image size and security:
+
+```dockerfile
+FROM node:lts-alpine as build
+
+WORKDIR /app
+
+RUN apk add --no-cache make g++ python3
+
+COPY src src
+COPY package.json tsconfig.json ./
+
+RUN npm install
+RUN npm run build
+
+
+FROM node:lts-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache make g++ python3 ffmpeg
+
+COPY package.json ./
+COPY settings.example.yaml ./settings.yaml
+COPY data data
+COPY locales locales
+COPY --from=build /app/dist ./dist
+
+RUN npm install --omit=dev
+
+CMD npm start
+```
+
+<Info>
+  The Dockerfile includes **ffmpeg** for audio processing, which is required for music playback features.
+</Info>
+
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file in your project root:
+
+```bash
+# Bot ID
+# Add the Client ID of bot which should be running Bastion.
+# https://discord.com/developers/applications
+BOT_ID=YOUR_BOT_CLIENT_ID
+
+# Bot Token
+# Add the token of the bot which should be running Bastion.
+# https://discord.com/developers/applications
+BOT_TOKEN=YOUR_BOT_TOKEN
+
+# Bot Owner
+# User ID of user who should be considered as the bot owner.
+OWNER_ID=YOUR_USER_ID
+
+# MongoDB connection URI
+# NOTE: If you're running MongoDB locally and using Bastion's Docker image,
+# replace the IP 127.0.0.1 to host.docker.internal so Docker can access
+# your local MongoDB server.
+MONGO_URI=mongodb://host.docker.internal:27017/bastion
+
+# Unsafe Mode
+# When enabled, this enables usage of unsafe commands like exec and eval.
+# Keep this disabled if the bot owner isn't exclusively you.
+UNSAFE_MODE=FALSE
+
+# Enable Music Activity
+# When enabled, Bastion updates the activity to the currently playing track.
+# It should ideally be disabled if music is played on multiple servers.
+BASTION_MUSIC_ACTIVITY=TRUE
+
+# Relay Direct Messages
+# When enabled, Bastion will relay any direct messages it receives to the
+# owner of the bot application / team.
+BASTION_RELAY_DMS=FALSE
+
+# Bastion API Port
+# Port used for Bastion API Server.
+BASTION_API_PORT=8377
+```
+
+<Note>
+  When using Docker, replace `127.0.0.1` with `host.docker.internal` in `MONGO_URI` to access your local MongoDB instance.
+</Note>
+
+### Settings File
+
+Alternatively, configure Bastion using `settings.yaml`:
+
+```yaml
+# Bot credentials
+id: "YOUR_BOT_CLIENT_ID"
+token: "YOUR_BOT_TOKEN"
+
+# Bot owners
+owners:
+  - "YOUR_USER_ID"
+
+# MongoDB connection
+mongoURI: "mongodb://host.docker.internal:27017/bastion"
+
+# Presences
+presences:
+- status: "online"
+  activity: 3
+  name: "the server"
+- status: "dnd"
+  activity: 1
+  name: "some games"
+  url: https://twitch.tv/iamtraction
+
+# Features
+musicActivity: true
+relayDirectMessages: false
+unsafeMode: false
+
+# API Server
+port: 8377
+auth: "YOUR_API_AUTH_TOKEN"
+```
+
+## Deployment Methods
+
+<CodeGroup>
+
+```bash Docker CLI
+# Build the Docker image
+docker build -t bastion .
+
+# Run the container
+docker run -d \
+  --name bastion \
+  --env-file .env \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/settings.yaml:/app/settings.yaml \
+  --restart unless-stopped \
+  bastion
+```
+
+```yaml docker-compose.yml
+version: '3.8'
+
+services:
+  bastion:
+    build: .
+    container_name: bastion
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./settings.yaml:/app/settings.yaml
+      - ./locales:/app/locales
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: bastion-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+```
+
+```yaml docker-compose.yml (External MongoDB)
+version: '3.8'
+
+services:
+  bastion:
+    build: .
+    container_name: bastion
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./settings.yaml:/app/settings.yaml
+      - ./locales:/app/locales
+    restart: unless-stopped
+    environment:
+      - MONGO_URI=mongodb://your-mongodb-host:27017/bastion
+```
+
+</CodeGroup>
+
+## Running with Docker Compose
+
+<Steps>
+  <Step title="Create docker-compose.yml">
+    Create a `docker-compose.yml` file in your Bastion directory using one of the examples above.
+  </Step>
+
+  <Step title="Configure environment">
+    Set up your `.env` file or `settings.yaml` with your bot credentials and configuration.
+  </Step>
+
+  <Step title="Start the services">
+    ```bash
+    docker-compose up -d
+    ```
+    This will build the image and start Bastion (and MongoDB if included).
+  </Step>
+
+  <Step title="View logs">
+    ```bash
+    docker-compose logs -f bastion
+    ```
+    Monitor the logs to ensure Bastion is running correctly.
+  </Step>
+</Steps>
+
+## Container Management
+
+### View running containers
+
+```bash
+docker ps
+```
+
+### Stop Bastion
+
+<CodeGroup>
+
+```bash Docker CLI
+docker stop bastion
+```
+
+```bash Docker Compose
+docker-compose stop
+```
+
+</CodeGroup>
+
+### Restart Bastion
+
+<CodeGroup>
+
+```bash Docker CLI
+docker restart bastion
+```
+
+```bash Docker Compose
+docker-compose restart
+```
+
+</CodeGroup>
+
+### Update and rebuild
+
+<CodeGroup>
+
+```bash Docker CLI
+# Pull latest changes
+git pull
+
+# Rebuild the image
+docker build -t bastion .
+
+# Stop and remove old container
+docker stop bastion
+docker rm bastion
+
+# Start new container
+docker run -d \
+  --name bastion \
+  --env-file .env \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/settings.yaml:/app/settings.yaml \
+  --restart unless-stopped \
+  bastion
+```
+
+```bash Docker Compose
+# Pull latest changes
+git pull
+
+# Rebuild and restart
+docker-compose up -d --build
+```
+
+</CodeGroup>
+
+### View logs
+
+<CodeGroup>
+
+```bash Docker CLI
+# View all logs
+docker logs bastion
+
+# Follow logs in real-time
+docker logs -f bastion
+
+# View last 100 lines
+docker logs --tail 100 bastion
+```
+
+```bash Docker Compose
+# View all logs
+docker-compose logs bastion
+
+# Follow logs in real-time
+docker-compose logs -f bastion
+```
+
+</CodeGroup>
+
+## Volumes and Data Persistence
+
+Bastion uses several directories that should be persisted:
+
+- `/app/data` - Database migrations, custom data
+- `/app/settings.yaml` - Configuration file
+- `/app/locales` - Language files (optional, for custom translations)
+
+<Warning>
+  Always mount the `data` directory as a volume to prevent data loss when updating containers.
+</Warning>
+
+## Troubleshooting
+
+### Cannot connect to MongoDB
+
+If Bastion can't connect to MongoDB:
+
+1. **Using local MongoDB**: Change `127.0.0.1` to `host.docker.internal` in `MONGO_URI`
+2. **Using Docker MongoDB**: Use the service name (e.g., `mongodb://mongodb:27017/bastion`)
+3. **Check MongoDB is running**: `docker ps` or verify your MongoDB Atlas connection
+
+### Container exits immediately
+
+Check the logs:
+```bash
+docker logs bastion
+```
+
+Common issues:
+- Missing or invalid bot token
+- MongoDB connection failure
+- Missing required environment variables
+
+### Permission issues with volumes
+
+Ensure the mounted directories have proper permissions:
+```bash
+chmod -R 755 data
+```
+
+## Production Recommendations
+
+<Steps>
+  <Step title="Use environment variables">
+    Store sensitive data in environment variables rather than in `settings.yaml`.
+  </Step>
+
+  <Step title="Enable restart policy">
+    Use `--restart unless-stopped` or configure it in docker-compose to ensure Bastion restarts after crashes or system reboots.
+  </Step>
+
+  <Step title="Monitor resources">
+    ```bash
+    docker stats bastion
+    ```
+    Monitor CPU and memory usage to ensure adequate resources.
+  </Step>
+
+  <Step title="Regular backups">
+    Back up your MongoDB database and `data` directory regularly.
+  </Step>
+
+  <Step title="Update regularly">
+    Keep Bastion and its dependencies updated for security and new features.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sharding" icon="server" href="/deployment/sharding">
+    Configure sharding for large-scale deployments
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/settings">
+    Customize Bastion's behavior and features
+  </Card>
+</CardGroup>

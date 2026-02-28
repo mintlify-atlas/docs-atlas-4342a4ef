@@ -1,0 +1,227 @@
+---
+title: Music Playback Commands
+description: Control music playback in voice channels with play, pause, resume, skip, stop, queue management, and more.
+---
+
+Bastion provides a full-featured music playback system for Discord voice channels. Play music from YouTube, manage queues, and control playback with these commands.
+
+<Note>
+  Music is only available in Premium Servers in the Public Bastion instance. Self-hosted instances can enable music for all servers by setting `music: true` in the guild configuration.
+</Note>
+
+## /play
+
+Play a song or playlist in the voice channel. Bastion will automatically join your voice channel and start playing.
+
+<ParamField path="song" type="string" required>
+  The song name or YouTube link/playlist you want to play. Supports:
+  - Song names (searches YouTube)
+  - YouTube video URLs
+  - YouTube playlist URLs
+</ParamField>
+
+### Usage Examples
+
+```bash
+# Play a song by name
+/play song: Never Gonna Give You Up
+
+# Play from a YouTube URL
+/play song: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+# Add an entire playlist
+/play song: https://www.youtube.com/playlist?list=PLx0sYbCqOb8Q_CLZC2BdBSKEEB59BOPUM
+```
+
+### Behavior
+
+- If nothing is playing, the song starts immediately
+- If something is already playing, the song is added to the queue
+- Playlists add all songs to the queue at once
+- Must be used in a voice channel (or when Bastion is already connected)
+
+<Info>
+  Bastion can update its activity status to show the currently playing track. Enable this with `musicActivity: true` in your settings.yaml.
+</Info>
+
+## /pause
+
+Pause the current music playback in the voice channel.
+
+### Usage Example
+
+```bash
+/pause
+```
+
+### Behavior
+
+- Pauses the currently playing track
+- Use `/resume` to continue playback
+- Returns an error if nothing is playing
+
+## /resume
+
+Resume the paused music playback in the voice channel.
+
+### Usage Example
+
+```bash
+/resume
+```
+
+### Behavior
+
+- Resumes a paused or auto-paused track
+- Returns an error if nothing is paused
+
+## /skip
+
+Skip the current track and play the next song in the queue.
+
+### Usage Example
+
+```bash
+/skip
+```
+
+### Behavior
+
+- Stops the current track and plays the next song in queue
+- If the queue is empty, music playback stops and Bastion disconnects
+- Returns an error if nothing is playing
+
+## /stop
+
+Stop music playback, clear the queue, and disconnect from the voice channel.
+
+### Usage Example
+
+```bash
+/stop
+```
+
+### Behavior
+
+- Clears the entire music queue
+- Stops the audio player
+- Disconnects Bastion from the voice channel
+
+## /queue
+
+Display, clear, or remove songs from the music queue.
+
+<ParamField path="remove" type="string">
+  Remove songs matching the specified text from the music queue.
+</ParamField>
+
+<ParamField path="clear" type="boolean">
+  Remove all songs from the music queue.
+</ParamField>
+
+### Usage Examples
+
+<Tabs>
+  <Tab title="View Queue">
+    ```bash
+    /queue
+    ```
+    
+    Displays the current music queue with:
+    - Currently playing song
+    - Up to 10 upcoming songs
+    - User who requested each song
+    - Total number of songs in queue
+  </Tab>
+  
+  <Tab title="Remove Songs">
+    ```bash
+    /queue remove: rick roll
+    ```
+    
+    Removes all songs from the queue that contain "rick roll" in the title.
+  </Tab>
+  
+  <Tab title="Clear Queue">
+    ```bash
+    /queue clear: True
+    ```
+    
+    Removes all songs from the queue. The currently playing song continues.
+  </Tab>
+</Tabs>
+
+## /shuffle
+
+Randomize the order of songs in the current music queue.
+
+### Usage Example
+
+```bash
+/shuffle
+```
+
+### Behavior
+
+- Randomly reorders all songs in the queue
+- Does not affect the currently playing song
+- Returns an error if the queue is empty
+
+## /join
+
+Move yourself to the voice channel where Bastion is currently connected.
+
+### Usage Example
+
+```bash
+/join
+```
+
+### Behavior
+
+- Moves you to Bastion's current voice channel
+- Requires you to already be in a voice channel
+- Requires permission to join Bastion's channel
+- Returns an error if Bastion is not in a voice channel
+
+## /now
+
+Display the song that's currently playing with playback controls.
+
+### Usage Example
+
+```bash
+/now
+```
+
+### Response
+
+Shows the current song name with interactive buttons:
+- **Pause / Resume** - Toggle playback
+- **Skip** - Skip to the next song
+
+### Behavior
+
+- Works with playing, paused, or auto-paused tracks
+- Buttons can be used by any member in the channel
+- Returns an error if nothing is playing
+
+---
+
+## Technical Details
+
+### Audio Quality
+
+Bastion streams audio at quality level 2 (high quality) using the `@iamtraction/play-dl` library.
+
+### Connection Management
+
+- Bastion automatically reconnects if briefly disconnected
+- Connection is destroyed after 5 seconds of disconnection
+- Music studio (player + queue) is cleaned up when disconnected
+
+### Queue Behavior
+
+- Queue is stored in memory per guild
+- Automatically plays the next song when current song ends
+- Queue is cleared when using `/stop` or when the last song finishes

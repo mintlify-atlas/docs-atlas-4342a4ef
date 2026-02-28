@@ -1,0 +1,215 @@
+---
+title: Custom Triggers
+description: Configure custom message triggers and automated responses in your Discord server
+---
+
+Custom triggers allow you to configure Bastion to automatically respond to specific message patterns with custom messages or emoji reactions. This powerful feature enables you to create interactive experiences and automate common responses.
+
+## How Triggers Work
+
+Triggers monitor all messages in your server and respond when a message matches a defined pattern. Each trigger can:
+
+- Send a custom message response
+- React with emojis
+- Respond with both messages and reactions
+
+<Info>
+  Triggers use pattern matching with wildcards, allowing flexible matching:
+  - `?` matches any single character
+  - `*` matches zero or more characters
+  - Pattern matching is case-insensitive
+</Info>
+
+## Configuration
+
+### Adding a Trigger
+
+Use the `/triggers` command to add a new trigger with a message response:
+
+```bash
+/triggers add:hello* message:Hello! How can I help you today?
+```
+
+This trigger will respond with a greeting whenever a message starts with "hello".
+
+### Adding Emoji Reactions
+
+You can also configure triggers to react with emojis:
+
+```bash
+/triggers add:thank* emoji:👍
+```
+
+### Combining Messages and Reactions
+
+Triggers support both message and emoji responses simultaneously:
+
+```bash
+/triggers add:awesome* message:Thanks for the positive vibes! emoji:🎉
+```
+
+<Steps>
+  <Step title="Open Discord">
+    Navigate to your Discord server where Bastion is installed.
+  </Step>
+  
+  <Step title="Run the command">
+    Use `/triggers add` with your desired pattern and response options.
+  </Step>
+  
+  <Step title="Test the trigger">
+    Send a message matching your pattern to verify the trigger works correctly.
+  </Step>
+</Steps>
+
+## Managing Triggers
+
+### Listing All Triggers
+
+View all configured triggers in your server:
+
+```bash
+/triggers
+```
+
+This displays an embed showing all active triggers with their response types.
+
+### Removing Triggers
+
+Delete a trigger by specifying its pattern:
+
+```bash
+/triggers remove:hello*
+```
+
+This removes all triggers matching the specified pattern.
+
+## Pattern Examples
+
+| Pattern | Matches | Example Messages |
+|---------|---------|------------------|
+| `hello` | Exact word "hello" | "hello", "Hello", "HELLO" |
+| `hello*` | Starts with "hello" | "hello there", "hello world" |
+| `*hello*` | Contains "hello" | "say hello", "hello there", "oh hello" |
+| `h?llo` | "h" + any char + "llo" | "hello", "hallo", "hxllo" |
+
+## Dynamic Variables
+
+Trigger responses support dynamic variables that are replaced when the trigger fires:
+
+```bash
+/triggers add:welcome* message:Welcome {mention}! Enjoy your stay.
+```
+
+<Note>
+  Variables are processed using the `variables.replace()` utility which replaces placeholders with actual values from the message context (line 145 in messageCreate.ts:145).
+</Note>
+
+## Embed Support
+
+Trigger messages support embed syntax using YAML front matter:
+
+```bash
+/triggers add:rules message:---\ncolor: 0x00ff00\ntitle: Server Rules\ndescription: Please follow our community guidelines\n---
+```
+
+The system automatically detects and parses embed syntax using the `generateEmbed()` utility (messageCreate.ts:145).
+
+## Premium Limits
+
+The number of triggers you can create depends on your Bastion premium tier:
+
+<Warning>
+  Free servers have a limit on the number of triggers they can create. Premium members can create more triggers. The system checks `Feature.Triggers` limits before allowing new triggers to be added (triggers.ts:71-74).
+</Warning>
+
+## Technical Implementation
+
+### Pattern Matching
+
+Triggers use regular expressions for pattern matching. The pattern is converted from wildcard syntax:
+
+```typescript
+// Pattern conversion (messageCreate.ts:131)
+const patternRegExp = new RegExp(
+  trigger.pattern.replace(/\?/g, ".").replace(/\*+/g, ".*"),
+  "ig"
+);
+```
+
+- `?` is converted to `.` (match any single character)
+- `*` is converted to `.*` (match zero or more characters)
+- The `ig` flags enable case-insensitive and global matching
+
+### Response Selection
+
+When multiple triggers match a message, one response is randomly selected from each category:
+
+```typescript
+// Random response selection (messageCreate.ts:145)
+const responseMessage = generateEmbed(
+  variables.replace(
+    responseMessages[Math.floor(Math.random() * responseMessages.length)],
+    message
+  )
+);
+```
+
+## Database Schema
+
+Triggers are stored in MongoDB with the following schema:
+
+```typescript
+interface Trigger {
+  guild: string;        // Guild ID
+  pattern: string;      // Trigger pattern
+  message?: string;     // Optional message response
+  reactions?: string;   // Optional emoji reactions
+}
+```
+
+## Permissions Required
+
+- **User Permission**: `Manage Server` (ManageGuild)
+- **Bot Permission**: None (for message responses), `Add Reactions` (for emoji responses)
+
+## Use Cases
+
+### Automated Support
+
+Create triggers for common questions:
+
+```bash
+/triggers add:*bot prefix* message:My prefix is `/`. Use slash commands!
+/triggers add:*how to join* message:Check out our #welcome channel for instructions.
+```
+
+### Interactive Responses
+
+Add personality to your server:
+
+```bash
+/triggers add:*good bot* message:Thank you! emoji:😊
+/triggers add:*bastion help* message:I'm here to help! Use `/help` to see all commands.
+```
+
+### Community Engagement
+
+Encourage positive interactions:
+
+```bash
+/triggers add:*congratulations* emoji:🎉
+/triggers add:*happy birthday* emoji:🎂
+```
+
+## Best Practices
+
+1. **Use specific patterns**: Avoid overly broad patterns like `*` that match everything
+2. **Test thoroughly**: Send test messages to verify triggers work as expected
+3. **Keep responses concise**: Short, clear responses work best
+4. **Avoid conflicts**: Be mindful of overlapping patterns that might trigger unexpectedly
+5. **Regular maintenance**: Remove outdated triggers to keep your server organized
+
+<Note>
+  Triggers are processed asynchronously and won't block other message handling operations (messageCreate.ts:310).
+</Note>

@@ -1,0 +1,573 @@
+---
+title: Role Management
+description: Automate role assignment with auto-roles, self-roles, select-roles, and level roles in Bastion.
+---
+
+Bastion provides comprehensive role management features that automate role assignment and let members choose their own roles. Configure auto-roles for new members, create self-assignable roles, build interactive role menus, and reward members with level-based roles.
+
+## Auto-Roles
+
+Automatically assign roles to members when they join your server.
+
+### Configure Auto-Roles
+
+Use `/config auto-roles` to set up automatic role assignment:
+
+<Tabs>
+  <Tab title="Add Auto-Role">
+    Add a role that will be auto-assigned to all new members:
+    
+    ```
+    /config auto-roles role:@Member
+    ```
+    
+    All members joining the server will automatically receive this role.
+  </Tab>
+  
+  <Tab title="Auto-Role for Bots">
+    Create an auto-role specifically for bots:
+    
+    ```
+    /config auto-roles role:@Bot bots:true
+    ```
+    
+    Only bots will receive this role when they join.
+  </Tab>
+  
+  <Tab title="Auto-Role for Users">
+    Create an auto-role only for human users:
+    
+    ```
+    /config auto-roles role:@Verified bots:false
+    ```
+    
+    Only human users (not bots) will receive this role.
+  </Tab>
+  
+  <Tab title="Remove Auto-Role">
+    Remove a role from auto-assignment:
+    
+    ```
+    /config auto-roles role:@Member
+    ```
+    
+    Running the command again on an existing auto-role removes it.
+  </Tab>
+  
+  <Tab title="List Auto-Roles">
+    View all configured auto-roles:
+    
+    ```
+    /config auto-roles
+    ```
+    
+    Shows all roles that are auto-assigned to new members.
+  </Tab>
+</Tabs>
+
+**Permissions Required:** Manage Guild
+
+**Source:** `~/workspace/source/src/commands/config/autoRoles.ts:16`
+
+### Auto-Role Options
+
+<CardGroup cols={3}>
+  <Card title="All Members" icon="users">
+    Don't specify `bots` parameter.
+    
+    Role is assigned to everyone (users and bots).
+  </Card>
+  
+  <Card title="Bots Only" icon="robot">
+    Use `bots:true`
+    
+    Role is assigned only to bot accounts.
+  </Card>
+  
+  <Card title="Users Only" icon="user">
+    Use `bots:false`
+    
+    Role is assigned only to human users.
+  </Card>
+</CardGroup>
+
+**Database Field:** `Role.autoAssignable`, `Role.bots`
+
+**Source:** `~/workspace/source/src/models/Role.ts:17-19`
+
+## Self-Roles
+
+Allow members to assign and remove roles themselves using the `/iam` command.
+
+### Configure Self-Roles
+
+Use `/config self-roles` to manage self-assignable roles:
+
+<Tabs>
+  <Tab title="Add Self-Role">
+    Make a role self-assignable:
+    
+    ```
+    /config self-roles role:@Gamer
+    ```
+    
+    Members can now assign this role to themselves with `/iam`.
+  </Tab>
+  
+  <Tab title="Remove Self-Role">
+    Remove a role from self-assignment:
+    
+    ```
+    /config self-roles role:@Gamer
+    ```
+    
+    Running the command again removes it from self-assignable roles.
+  </Tab>
+  
+  <Tab title="List Self-Roles">
+    View all self-assignable roles:
+    
+    ```
+    /config self-roles
+    ```
+    
+    Shows all roles members can assign to themselves.
+  </Tab>
+</Tabs>
+
+**Permissions Required:** Manage Guild
+
+**Source:** `~/workspace/source/src/commands/config/selfRoles.ts:16`
+
+### Using Self-Roles
+
+Members use the `/iam` command to assign/remove self-roles:
+
+```
+/iam role:@Gamer
+```
+
+**Toggle Behavior:**
+- If the member doesn't have the role → role is assigned
+- If the member already has the role → role is removed
+
+**Interactive Menu:**
+
+Running `/iam` without parameters shows an interactive menu:
+
+```
+/iam
+```
+
+This displays a select menu with all available self-roles, complete with:
+- Role names
+- Role descriptions (if configured)
+- Role emojis (if configured)
+- Multi-select capability
+- Clear button to remove all selected roles
+
+**Source:** `~/workspace/source/src/commands/iam.ts:15`
+
+## Select-Roles (Role Menus)
+
+Create interactive role selection menus with buttons or dropdown menus.
+
+### Create Select-Roles Group
+
+Use `/config select-roles add` to create a role selection menu:
+
+```
+/config select-roles add message:Choose your platform! channel:#roles
+```
+
+**Parameters:**
+- `message` (required) - Message shown above the role selector
+- `channel` - Channel to send the menu to (defaults to current channel)
+- `type` - Behavior: Add Only or Remove Only
+- `ui` - Interface style: Buttons or Select Menu
+- `min` - Minimum roles to select (Select Menu only, 0-25)
+- `max` - Maximum roles to select (Select Menu only, 1-25)
+
+**Source:** `~/workspace/source/src/commands/config/select-roles/add.ts:18`
+
+### Select-Roles Types
+
+<Accordion title="Add Only">
+  Members can only **add** roles from the menu, not remove them.
+  
+  Use case: Permanent selections like platform or region that shouldn't be easily removed.
+  
+  ```
+  /config select-roles add message:Pick your region type:0
+  ```
+</Accordion>
+
+<Accordion title="Remove Only">
+  Members can only **remove** roles from the menu, not add them.
+  
+  Use case: Allow members to opt-out of roles assigned by moderators.
+  
+  ```
+  /config select-roles add message:Opt out of pings type:1
+  ```
+</Accordion>
+
+<Accordion title="Toggle (Default)">
+  Members can both add and remove roles freely.
+  
+  Use case: Standard role menus for games, interests, notifications, etc.
+  
+  ```
+  /config select-roles add message:Choose your games
+  ```
+</Accordion>
+
+### Select-Roles UI Styles
+
+<Tabs>
+  <Tab title="Buttons (Default)">
+    Displays roles as clickable buttons:
+    
+    ```
+    /config select-roles add message:Choose roles ui:0
+    ```
+    
+    **Benefits:**
+    - More visual
+    - Faster to click
+    - Shows all options at once
+    
+    **Limitations:**
+    - Maximum 25 buttons per menu
+    - Takes more vertical space
+  </Tab>
+  
+  <Tab title="Select Menu">
+    Displays roles in a dropdown menu:
+    
+    ```
+    /config select-roles add message:Choose roles ui:1 min:1 max:5
+    ```
+    
+    **Benefits:**
+    - Supports min/max selection limits
+    - Compact design
+    - Multi-select capability
+    
+    **Limitations:**
+    - Requires an extra click to open
+    - Maximum 25 options
+  </Tab>
+</Tabs>
+
+### Managing Select-Roles
+
+<Tabs>
+  <Tab title="List Groups">
+    View all select-role groups:
+    
+    ```
+    /config select-roles list
+    ```
+    
+    Shows all configured role selection menus with their settings.
+  </Tab>
+  
+  <Tab title="Update Group">
+    Modify an existing select-role group:
+    
+    ```
+    /config select-roles update message:message-id ...
+    ```
+    
+    Update the roles, settings, or appearance of a role menu.
+  </Tab>
+  
+  <Tab title="Remove Group">
+    Delete a select-role group:
+    
+    ```
+    /config select-roles remove message:message-id
+    ```
+    
+    Removes the role selection menu completely.
+  </Tab>
+</Tabs>
+
+**Source:** `~/workspace/source/src/commands/config/select-roles/list.ts`, `~/workspace/source/src/commands/config/select-roles/update.ts`, `~/workspace/source/src/commands/config/select-roles/remove.ts`
+
+## Level Roles
+
+Automatically assign roles to members when they reach certain levels in the gamification system.
+
+### Configure Level Roles
+
+Use `/role levels` to set up level-based role rewards:
+
+<Tabs>
+  <Tab title="Assign Role to Level">
+    ```
+    /role levels role:@Bronze level:5
+    ```
+    
+    Members who reach level 5 automatically receive the Bronze role.
+  </Tab>
+  
+  <Tab title="Multiple Roles Per Level">
+    ```
+    /role levels role:@Active level:10
+    /role levels role:@Contributor level:10
+    ```
+    
+    Members who reach level 10 receive both roles.
+  </Tab>
+  
+  <Tab title="View Role's Level">
+    ```
+    /role levels role:@Bronze
+    ```
+    
+    Shows which level the Bronze role is assigned to.
+  </Tab>
+  
+  <Tab title="View Level's Roles">
+    ```
+    /role levels level:10
+    ```
+    
+    Shows all roles assigned to level 10.
+  </Tab>
+  
+  <Tab title="View All">
+    ```
+    /role levels
+    ```
+    
+    Shows a summary of all level role configurations.
+  </Tab>
+  
+  <Tab title="Remove Level">
+    ```
+    /role levels remove:10
+    ```
+    
+    Unassigns all roles from level 10.
+  </Tab>
+</Tabs>
+
+**Permissions Required:** Manage Roles (user and bot)
+
+**Source:** `~/workspace/source/src/commands/role/levels.ts:16`
+
+### Level Role Behavior
+
+Level roles work differently from other role types:
+
+1. **Automatic Assignment:** Roles are assigned when members level up
+2. **Nearest Level:** Members get roles from the highest level they've achieved
+3. **Auto-Remove:** Roles from lower levels are automatically removed
+4. **Multi-Role:** Multiple roles can exist at the same level
+
+**Example Progression:**
+
+```
+Level 5:  Bronze → Member has: Bronze
+Level 10: Silver → Member has: Silver (Bronze removed)
+Level 15: Gold   → Member has: Gold (Silver removed)
+```
+
+**Source:** `~/workspace/source/src/listeners/messageCreate.ts:31-57`
+
+<Warning>
+Level roles from previous levels are automatically removed. If you want cumulative roles, use separate non-level roles.
+</Warning>
+
+## Role Configuration
+
+Customize roles with descriptions and emojis.
+
+### Role Config Command
+
+Use `/role config` to add metadata to roles:
+
+<Tabs>
+  <Tab title="Set Emoji">
+    ```
+    /role config role:@Gamer emoji:🎮
+    ```
+    
+    Sets an emoji for the role. Works with:
+    - Standard Unicode emojis: 🎮
+    - Custom server emojis: :custom_emoji:
+  </Tab>
+  
+  <Tab title="Set Description">
+    ```
+    /role config role:@Gamer description:For gaming enthusiasts
+    ```
+    
+    Sets a description (max 100 characters) shown in role menus.
+  </Tab>
+  
+  <Tab title="Set Both">
+    ```
+    /role config role:@Gamer emoji:🎮 description:Gaming fans
+    ```
+    
+    Sets both emoji and description at once.
+  </Tab>
+  
+  <Tab title="Clear Config">
+    ```
+    /role config role:@Gamer
+    ```
+    
+    Removes emoji and description from the role.
+  </Tab>
+</Tabs>
+
+**Permissions Required:** Manage Roles
+
+**Role Icons:**
+
+If your server has Boost Level 2+, emojis are also set as role icons in the server's role list.
+
+**Source:** `~/workspace/source/src/commands/role/config.ts:16`
+
+**Database Fields:** `Role.description`, `Role.emoji`
+
+**Source:** `~/workspace/source/src/models/Role.ts:11-12`
+
+## Premium Limits
+
+Some role features have limits on the Public Bastion that can be increased with Premium:
+
+<CardGroup cols={3}>
+  <Card title="Auto-Roles" icon="user-plus">
+    Number of auto-assignable roles you can configure.
+    
+    Upgrade for more auto-roles.
+  </Card>
+  
+  <Card title="Self-Roles" icon="hand-pointer">
+    Number of self-assignable roles you can configure.
+    
+    Upgrade for more self-roles.
+  </Card>
+  
+  <Card title="Select-Roles" icon="list">
+    Number of role selection menus you can create.
+    
+    Upgrade for more select-role groups.
+  </Card>
+  
+  <Card title="Level Roles" icon="layer-group">
+    Number of distinct levels with role rewards.
+    
+    Upgrade for more level milestones.
+  </Card>
+  
+  <Card title="Roles Per Level" icon="clone">
+    Number of roles assignable to each level.
+    
+    Upgrade for more roles per level.
+  </Card>
+</CardGroup>
+
+<Note>
+Self-hosted instances have no limits on any role features.
+</Note>
+
+**Source:** `~/workspace/source/src/commands/config/autoRoles.ts:56-67`, `~/workspace/source/src/commands/config/selfRoles.ts:49-59`, `~/workspace/source/src/commands/role/levels.ts:64-89`
+
+## Best Practices
+
+<Accordion title="Organize Auto-Roles">
+  Use auto-roles strategically:
+  
+  - **@Member** - Basic role for all new members
+  - **@Unverified** - For servers with verification systems
+  - **@Bot** - Separate bots from regular members
+  
+  Avoid assigning too many roles automatically - it can be overwhelming.
+</Accordion>
+
+<Accordion title="Structure Self-Roles">
+  Organize self-roles into categories:
+  
+  - **Interests:** Gaming, Art, Music, etc.
+  - **Notifications:** Announcements, Events, Updates
+  - **Platforms:** PC, Console, Mobile
+  - **Regions:** NA, EU, ASIA, etc.
+  
+  Use role colors to visually group related roles.
+</Accordion>
+
+<Accordion title="Design Clear Role Menus">
+  When creating select-roles:
+  
+  - Write clear instructions in the message
+  - Use descriptive role names
+  - Add emojis for visual appeal
+  - Include helpful descriptions
+  - Group related roles in the same menu
+  
+  Example: "Choose your gaming platforms below 👇"
+</Accordion>
+
+<Accordion title="Plan Level Role Tiers">
+  Create meaningful progression:
+  
+  - **Early (1-10):** Welcome, Newbie, Regular
+  - **Mid (11-50):** Active, Veteran, Dedicated  
+  - **High (51-100+):** Elite, Legend, Champion
+  
+  Space levels appropriately so members can achieve them.
+</Accordion>
+
+<Accordion title="Use Role Permissions Wisely">
+  Consider what permissions each role should have:
+  
+  - Auto-roles: Basic viewing permissions
+  - Self-roles: Access to specific channels
+  - Level roles: Perks and privileges
+  
+  Never give dangerous permissions to auto/self-assignable roles.
+</Accordion>
+
+## Troubleshooting
+
+<Accordion title="Roles Not Being Assigned">
+  If roles aren't being assigned automatically:
+  
+  1. Ensure Bastion has **Manage Roles** permission
+  2. Check that Bastion's role is higher than the roles being assigned
+  3. Verify the role is properly configured as auto/self/level role
+  4. Check for any Discord permission errors in logs
+</Accordion>
+
+<Accordion title="Can't Use /iam">
+  If members can't use self-roles:
+  
+  1. Verify the role is configured with `/config self-roles`
+  2. Ensure the role hasn't been deleted
+  3. Check that the role isn't @everyone
+  4. Verify Bastion has permission to assign the role
+</Accordion>
+
+<Accordion title="Select-Roles Not Appearing">
+  If role menus aren't showing:
+  
+  1. Ensure you added roles to the group after creating it
+  2. Verify the channel still exists
+  3. Check that the message wasn't deleted
+  4. Confirm Bastion has permission to send messages in that channel
+</Accordion>
+
+<Accordion title="Level Roles Replacing Each Other">
+  This is intended behavior. Level roles from lower levels are automatically removed.
+  
+  If you want cumulative roles:
+  - Use self-roles or auto-roles instead
+  - Or manually assign roles that shouldn't be removed
+</Accordion>

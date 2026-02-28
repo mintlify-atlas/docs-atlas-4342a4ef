@@ -1,0 +1,478 @@
+---
+title: Settings Configuration
+description: Configure Bastion using the settings.yaml file with bot credentials, presences, features, and API integrations
+---
+
+The `settings.yaml` file is the primary configuration file for Bastion. It contains all core settings for your bot, including credentials, behavior options, presences, and API keys.
+
+## Location
+
+The settings file should be located in your Bastion root directory:
+
+```
+bastion/
+├── settings.yaml
+├── settings.example.yaml
+└── ...
+```
+
+<Note>
+  Copy `settings.example.yaml` to `settings.yaml` and configure it with your values. The example file is provided as a template.
+</Note>
+
+## Bot Configuration
+
+### Bot Credentials
+
+<ParamField path="id" type="string" required>
+  The Client ID of your Discord bot application.
+  
+  Get this from the [Discord Developer Portal](https://discord.com/developers/applications).
+  
+  <Note>
+    The `BOT_ID` environment variable will overwrite this value if set.
+  </Note>
+</ParamField>
+
+<ParamField path="token" type="string" required>
+  The bot token for your Discord application.
+  
+  Get this from the [Discord Developer Portal](https://discord.com/developers/applications) under the "Bot" section.
+  
+  <Warning>
+    Never share your bot token publicly. Treat it like a password. If exposed, regenerate it immediately from the Discord Developer Portal.
+  </Warning>
+  
+  <Note>
+    The `BOT_TOKEN` environment variable will overwrite this value if set.
+  </Note>
+</ParamField>
+
+<ParamField path="owners" type="array" required>
+  Array of Discord User IDs who should be considered bot owners.
+  
+  Bot owners have access to owner-only commands and administrative features.
+  
+  ```yaml
+  owners:
+    - "123456789012345678"
+    - "987654321098765432"
+  ```
+  
+  <Info>
+    To get your User ID, enable Developer Mode in Discord (User Settings > Advanced), then right-click your username and select "Copy User ID".
+  </Info>
+  
+  <Note>
+    The `OWNER_ID` environment variable adds an additional owner to this list.
+  </Note>
+</ParamField>
+
+### Database Configuration
+
+<ParamField path="mongoURI" type="string" required>
+  MongoDB connection URI for database storage.
+  
+  **Default**: `mongodb://127.0.0.1:27017/bastion`
+  
+  ```yaml
+  mongoURI: "mongodb://127.0.0.1:27017/bastion"
+  ```
+  
+  <Warning>
+    **Docker Users**: If you're running MongoDB locally and using Bastion's Docker image, replace `127.0.0.1` with `host.docker.internal` so Docker can access your local MongoDB server:
+    
+    ```yaml
+    mongoURI: "mongodb://host.docker.internal:27017/bastion"
+    ```
+  </Warning>
+  
+  <Note>
+    The `MONGO_URI` environment variable will overwrite this value if set.
+  </Note>
+  
+  See the [Database Configuration](/configuration/database) page for detailed MongoDB setup instructions.
+</ParamField>
+
+## Bot Behavior
+
+### Presences
+
+<ParamField path="presences" type="array">
+  Array of presence configurations that Bastion will cycle through randomly.
+  
+  Each presence object contains:
+  
+  - `status`: Bot status - `online`, `idle`, `dnd`, or `invisible`
+  - `activity`: Activity type (number)
+    - `0`: Playing
+    - `1`: Streaming
+    - `2`: Listening
+    - `3`: Watching
+    - `4`: Custom
+    - `5`: Competing
+  - `name`: Activity name (text displayed)
+  - `url`: Twitch URL (only used when `activity` is `1` for Streaming)
+  
+  ```yaml
+  presences:
+    - status: "online"
+      activity: 3
+      name: "the server"
+      url:
+    - status: "dnd"
+      activity: 1
+      name: "some games"
+      url: https://twitch.tv/iamtraction
+  ```
+</ParamField>
+
+<ParamField path="musicActivity" type="boolean" default="true">
+  Enable automatic activity updates to show the currently playing track.
+  
+  When enabled, Bastion updates its activity to display the currently playing music track.
+  
+  <Warning>
+    This should ideally be disabled if music is played on multiple servers simultaneously, as the activity will rapidly change between different tracks.
+  </Warning>
+  
+  <Note>
+    The `BASTION_MUSIC_ACTIVITY` environment variable will overwrite this value if set.
+  </Note>
+</ParamField>
+
+<ParamField path="relayDirectMessages" type="boolean | string" default="false">
+  Relay direct messages received by the bot to the bot owner.
+  
+  When enabled, Bastion will forward any direct messages it receives to the owner of the bot application.
+  
+  - Set to `true` to relay DMs to the bot application owner
+  - Set to `false` to disable DM relaying
+  - Set to a Discord webhook URL to relay DMs via webhook
+  
+  ```yaml
+  # Relay to bot owner
+  relayDirectMessages: true
+  
+  # Relay via webhook
+  relayDirectMessages: "https://discord.com/api/webhooks/..."
+  ```
+  
+  <Note>
+    The `BASTION_RELAY_DMS` environment variable will overwrite this value if set.
+  </Note>
+</ParamField>
+
+<ParamField path="unsafeMode" type="boolean" default="false">
+  Enable unsafe commands like `exec` and `eval`.
+  
+  <Warning>
+    **Security Risk**: Only enable this if you are the exclusive bot owner and understand the security implications. Unsafe commands can execute arbitrary code and system commands.
+  </Warning>
+  
+  Keep this disabled unless absolutely necessary for development or debugging.
+  
+  <Note>
+    The `UNSAFE_MODE` environment variable will overwrite this value if set.
+  </Note>
+</ParamField>
+
+## API Server
+
+<ParamField path="port" type="number" default="8377">
+  Port number for the Bastion API Server.
+  
+  If not set, the API server will not start.
+  
+  ```yaml
+  port: 8377
+  ```
+  
+  <Note>
+    The `BASTION_API_PORT` or `PORT` environment variables will overwrite this value if set.
+  </Note>
+</ParamField>
+
+<ParamField path="auth" type="string">
+  Authentication token for accessing the Bastion API Server.
+  
+  <Warning>
+    If auth is not set, the API server will not start. This is a security requirement.
+  </Warning>
+  
+  <Note>
+    The `BASTION_API_AUTH` environment variable will overwrite this value if set.
+  </Note>
+</ParamField>
+
+## API Keys
+
+<Info>
+  API keys are optional and only required for specific features and commands. See the [API Keys](/configuration/api-keys) page for detailed information about each service.
+</Info>
+
+### Third-Party Service Keys
+
+<ParamField path="coinMarketCapApiKey" type="string">
+  Required for the `cryptocurrency` command.
+  
+  Get your API key from [CoinMarketCap](https://coinmarketcap.com/api/).
+</ParamField>
+
+<ParamField path="nasaApiKey" type="string" default="DEMO_KEY">
+  Required for the `apod` (Astronomy Picture of the Day) command.
+  
+  Get your API key from [NASA API](https://api.nasa.gov/).
+  
+  <Info>
+    The default `DEMO_KEY` is provided for testing but has rate limits. Register for a free API key for production use.
+  </Info>
+</ParamField>
+
+<ParamField path="tavilyApiKey" type="string">
+  Optionally required for the `search` command.
+  
+  Get your API key from [Tavily](https://www.tavily.com/).
+</ParamField>
+
+<ParamField path="openWeatherMapApiKey" type="string">
+  Required for the `weather` command.
+  
+  Get your API key from [OpenWeatherMap](https://openweathermap.org/api).
+</ParamField>
+
+<ParamField path="tmdbApiKey" type="string">
+  Required for the `movie` and `tv` commands.
+  
+  Get your API key from [The Movie Database (TMDB)](https://www.themoviedb.org/settings/api).
+</ParamField>
+
+<ParamField path="trackerNetworkApiKey" type="string">
+  Required for gaming stats commands: `apex`, `csgo`, and `fortnite`.
+  
+  Get your API key from [Tracker Network](https://tracker.gg/developers).
+</ParamField>
+
+<ParamField path="wordnikApiKey" type="string">
+  Required for the `definitions` command.
+  
+  Get your API key from [Wordnik](https://developer.wordnik.com/).
+</ParamField>
+
+### AI Service Keys
+
+<ParamField path="openai" type="object">
+  OpenAI configuration for the `chat` command using ChatGPT APIs.
+  
+  ```yaml
+  openai:
+    apiKey: "sk-..."
+    model: "gpt-4o-mini"
+    maxTokens: 100
+  ```
+  
+  <ParamField path="openai.apiKey" type="string">
+    Your OpenAI API key from [OpenAI Platform](https://platform.openai.com/api-keys).
+  </ParamField>
+  
+  <ParamField path="openai.model" type="string" default="gpt-4o-mini">
+    The OpenAI model to use. See [OpenAI Models](https://platform.openai.com/docs/models) for available options.
+    
+    <Info>
+      API pricing depends on the model selected. Check [OpenAI Pricing](https://openai.com/pricing) for details.
+    </Info>
+  </ParamField>
+  
+  <ParamField path="openai.maxTokens" type="number" default="100">
+    Maximum number of tokens in ChatGPT's responses. Controls response length.
+    
+    Use the [OpenAI Tokenizer](https://platform.openai.com/tokenizer) to estimate token counts.
+  </ParamField>
+</ParamField>
+
+<ParamField path="gemini" type="object">
+  Google Gemini configuration for the `chat` command using Gemini APIs.
+  
+  ```yaml
+  gemini:
+    apiKey: "..."
+    model: "gemini-2.0-flash-exp"
+    maxOutputTokens: 256
+  ```
+  
+  <ParamField path="gemini.apiKey" type="string">
+    Your Google AI API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+  </ParamField>
+  
+  <ParamField path="gemini.model" type="string" default="gemini-2.0-flash-exp">
+    The Gemini model to use. See [Gemini Models](https://ai.google.dev/gemini-api/docs/models/gemini) for available options.
+    
+    <Info>
+      API pricing depends on the model selected. Check [Gemini Pricing](https://ai.google.dev/pricing) for details.
+    </Info>
+  </ParamField>
+  
+  <ParamField path="gemini.maxOutputTokens" type="number" default="256">
+    Maximum number of output tokens in Gemini's responses. Controls response length.
+    
+    See [Gemini Tokens](https://ai.google.dev/gemini-api/docs/tokens) for more information.
+  </ParamField>
+</ParamField>
+
+<ParamField path="anthropic" type="object">
+  Anthropic Claude configuration for the `chat` command using Claude APIs.
+  
+  ```yaml
+  anthropic:
+    apiKey: "sk-ant-..."
+    model: "claude-3-5-haiku-20241022"
+    maxTokens: 128
+  ```
+  
+  <ParamField path="anthropic.apiKey" type="string">
+    Your Anthropic API key from [Anthropic Console](https://console.anthropic.com/settings/keys).
+  </ParamField>
+  
+  <ParamField path="anthropic.model" type="string" default="claude-3-5-haiku-20241022">
+    The Claude model to use. See [Claude Models](https://docs.anthropic.com/en/docs/about-claude/models) for available options.
+    
+    <Info>
+      API pricing depends on the model selected. Check [Anthropic Pricing](https://www.anthropic.com/pricing#anthropic-api) for details.
+    </Info>
+  </ParamField>
+  
+  <ParamField path="anthropic.maxTokens" type="number" default="128">
+    Maximum number of tokens in Claude's responses. Controls response length.
+    
+    See the [Model Comparison Table](https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table) for token limits.
+  </ParamField>
+</ParamField>
+
+### Gaming Service Keys
+
+<ParamField path="twitch" type="object">
+  Twitch configuration for live stream notifications and the `game` command.
+  
+  ```yaml
+  twitch:
+    clientId: "..."
+    clientSecret: "..."
+    accessToken: "..."
+  ```
+  
+  Get your credentials from the [Twitch Developer Console](https://dev.twitch.tv/console/apps).
+  
+  <ParamField path="twitch.clientId" type="string">
+    Your Twitch application Client ID.
+  </ParamField>
+  
+  <ParamField path="twitch.clientSecret" type="string">
+    Your Twitch application Client Secret.
+  </ParamField>
+  
+  <ParamField path="twitch.accessToken" type="string">
+    OAuth access token for Twitch API authentication.
+  </ParamField>
+</ParamField>
+
+<ParamField path="ubisoft" type="object">
+  Ubisoft account credentials for the `rainbow6` command.
+  
+  ```yaml
+  ubisoft:
+    email: "your@email.com"
+    password: "your-password"
+  ```
+  
+  <Warning>
+    Store your Ubisoft credentials securely. Consider using environment variables instead of storing passwords in the settings file.
+  </Warning>
+  
+  <ParamField path="ubisoft.email" type="string">
+    Your Ubisoft account email.
+  </ParamField>
+  
+  <ParamField path="ubisoft.password" type="string">
+    Your Ubisoft account password.
+  </ParamField>
+</ParamField>
+
+## Internal Settings
+
+<Warning>
+  The following settings are for internal use only. You typically don't need to configure these unless you're contributing to Bastion development.
+</Warning>
+
+<ParamField path="bastion" type="object">
+  Internal Bastion webhook configuration.
+  
+  ```yaml
+  bastion:
+    webhookId: ""
+    webhookToken: ""
+  ```
+</ParamField>
+
+<ParamField path="patreon" type="object">
+  Internal Patreon integration configuration.
+  
+  ```yaml
+  patreon:
+    accessToken: ""
+  ```
+</ParamField>
+
+## Example Configuration
+
+```yaml settings.yaml
+# Bot Credentials
+id: "123456789012345678"
+token: "your-bot-token-here"
+owners:
+  - "987654321098765432"
+
+# Database
+mongoURI: "mongodb://127.0.0.1:27017/bastion"
+
+# Presences
+presences:
+  - status: "online"
+    activity: 3
+    name: "the server"
+    url:
+  - status: "dnd"
+    activity: 0
+    name: "with Discord.js"
+    url:
+
+# Features
+musicActivity: true
+relayDirectMessages: false
+unsafeMode: false
+
+# API Server
+port: 8377
+auth: "your-secure-auth-token"
+
+# AI Services (optional)
+openai:
+  apiKey: "sk-..."
+  model: "gpt-4o-mini"
+  maxTokens: 100
+
+gemini:
+  apiKey: "..."
+  model: "gemini-2.0-flash-exp"
+  maxOutputTokens: 256
+
+# Other API Keys (optional)
+nasaApiKey: "DEMO_KEY"
+openWeatherMapApiKey: "..."
+tmdbApiKey: "..."
+```
+
+## See Also
+
+- [Environment Variables](/configuration/environment-variables) - Override settings with environment variables
+- [Database Configuration](/configuration/database) - MongoDB setup and connection details
+- [API Keys](/configuration/api-keys) - Detailed guide for all third-party API keys

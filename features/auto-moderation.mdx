@@ -1,0 +1,275 @@
+---
+title: Auto-Moderation
+description: Protect your server with automated content filters for emails, invites, and links using Discord's native AutoMod system.
+---
+
+Bastion integrates with Discord's AutoMod system to provide powerful automated content filtering. Configure filters with a single command to automatically block unwanted content and protect your community.
+
+## Email Filter
+
+Block email addresses from being posted in your server to prevent spam and protect member privacy.
+
+### Configure Email Filter
+
+Use the `/config filter emails` command to enable or configure the email filter:
+
+```
+/config filter emails
+```
+
+**What It Does:**
+- Creates an AutoMod rule named "Block Emails"
+- Blocks messages containing email addresses using regex pattern matching
+- Applies a 60-second timeout to violators
+- Sends alert messages to your moderation log channel (if configured)
+
+**Permissions Required:** Manage Guild (both user and bot)
+
+<Note>
+Running the command again toggles the filter on/off. The filter uses the regex pattern: `[A-Za-z0-9.+~_-]+\@[A-Za-z0-9.-]+\.[A-Za-z0-9.-]+`
+</Note>
+
+### Filter Actions
+
+When an email is detected, Bastion automatically:
+
+1. **Blocks the message** with custom feedback: "You are not allowed to send emails in this channel."
+2. **Times out the user** for 60 seconds
+3. **Logs the event** to your moderation log channel (if configured)
+
+**Source:** `~/workspace/source/src/commands/config/filter/emails.ts:63-75`
+
+## Invite Filter
+
+Prevent members from posting Discord server invites to stop advertisement and server raiding.
+
+### Configure Invite Filter
+
+Use the `/config filter invites` command to enable or configure the invite filter:
+
+```
+/config filter invites
+```
+
+**What It Does:**
+- Creates an AutoMod rule named "Block Invites"
+- Blocks Discord invite links (discord.gg, discord.com/invite)
+- Applies a 60-second timeout to violators
+- Sends alert messages to your moderation log channel (if configured)
+
+**Permissions Required:** Manage Guild (both user and bot)
+
+<Warning>
+The invite filter blocks ALL Discord invites, including your own server's invites. Consider exempting specific channels or roles if you need to share invites.
+</Warning>
+
+### Detected Patterns
+
+The filter catches all common Discord invite formats:
+- `discord.gg/invite-code`
+- `discord.com/invite/invite-code`
+- `discordapp.com/invite/invite-code`
+- With or without `https://` or `www.`
+
+**Regex Pattern:** `(?:https?://)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com/invite)/[a-z0-9-.]+`
+
+**Source:** `~/workspace/source/src/commands/config/filter/invites.ts:63-75`
+
+## Link Filter
+
+Block all links to prevent spam, phishing, and unwanted content sharing.
+
+### Configure Link Filter
+
+Use the `/config filter links` command to enable or configure the link filter:
+
+```
+/config filter links
+```
+
+**What It Does:**
+- Creates an AutoMod rule named "Block Links"
+- Blocks all HTTP and HTTPS links
+- Applies a 60-second timeout to violators
+- Sends alert messages to your moderation log channel (if configured)
+
+**Permissions Required:** Manage Guild (both user and bot)
+
+<Warning>
+The link filter is very strict and blocks ALL links. This may be too restrictive for general chat channels. Consider using this selectively.
+</Warning>
+
+**Regex Pattern:** `https?://(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+`
+
+**Source:** `~/workspace/source/src/commands/config/filter/links.ts:63-75`
+
+## Managing Filters
+
+<Tabs>
+  <Tab title="Enable Filter">
+    Run the filter command to create and enable it:
+    
+    ```
+    /config filter emails
+    /config filter invites
+    /config filter links
+    ```
+    
+    You'll see a confirmation message when the filter is configured.
+  </Tab>
+  
+  <Tab title="Disable Filter">
+    Run the same command again to toggle the filter off:
+    
+    ```
+    /config filter emails
+    ```
+    
+    The filter rule remains configured but becomes inactive.
+  </Tab>
+  
+  <Tab title="Re-enable Filter">
+    Run the command a third time to toggle it back on:
+    
+    ```
+    /config filter emails
+    ```
+    
+    The filter is re-activated with the same settings.
+  </Tab>
+</Tabs>
+
+## Filter Configuration
+
+Each filter is stored in your guild database and includes:
+
+<CardGroup cols={3}>
+  <Card title="Email Filter" icon="envelope">
+    **Database Field:** `emailFilterRule`
+    
+    Stores the AutoMod rule ID for email blocking.
+  </Card>
+  
+  <Card title="Invite Filter" icon="link">
+    **Database Field:** `inviteFilterRule`
+    
+    Stores the AutoMod rule ID for invite blocking.
+  </Card>
+  
+  <Card title="Link Filter" icon="globe">
+    **Database Field:** `linkFilterRule`
+    
+    Stores the AutoMod rule ID for link blocking.
+  </Card>
+</CardGroup>
+
+**Source:** `~/workspace/source/src/models/Guild.ts:36-38`
+
+## Moderation Log Integration
+
+All filter violations can be logged to a dedicated moderation channel.
+
+### Configure Moderation Logs
+
+Set the `moderationLogChannel` in your guild configuration:
+
+```yaml
+moderationLogChannel: "your-channel-id"
+```
+
+When configured, filter violations automatically send alert messages to this channel with:
+- Username and details of the violator
+- The content that triggered the filter
+- Timestamp of the violation
+
+**Source:** `~/workspace/source/src/commands/config/filter/emails.ts:53-60`
+
+## Best Practices
+
+<Accordion title="Use Selective Filtering">
+  Not all filters are appropriate for all servers:
+  
+  - **Email Filter:** Great for most servers to prevent spam
+  - **Invite Filter:** Essential for preventing server raids
+  - **Link Filter:** Best for support channels or verification areas
+  
+  Consider your server's needs before enabling filters globally.
+</Accordion>
+
+<Accordion title="Configure Exemptions">
+  Use Discord's AutoMod settings to exempt:
+  
+  - **Roles:** Allow moderators or trusted members to bypass filters
+  - **Channels:** Exempt specific channels like #links or #partnerships
+  
+  Access these settings through Discord's Server Settings > AutoMod.
+</Accordion>
+
+<Accordion title="Monitor Filter Effectiveness">
+  Regularly check your moderation log channel to:
+  
+  - Ensure filters aren't too restrictive
+  - Identify repeat offenders
+  - Adjust timeout durations if needed
+  
+  You can modify filter actions through Discord's AutoMod interface.
+</Accordion>
+
+<Accordion title="Combine with Manual Moderation">
+  AutoMod filters are your first line of defense, but they work best when combined with:
+  
+  - Active moderators who can handle edge cases
+  - Clear server rules that explain what's not allowed
+  - The infraction system for repeat offenders
+</Accordion>
+
+## Technical Details
+
+### Filter Architecture
+
+Bastion's filters use Discord's native AutoMod system:
+
+1. **Trigger Type:** Keyword matching with regex patterns
+2. **Event Type:** Message send events
+3. **Actions:** Block message, timeout user, send alert
+
+### Action Sequence
+
+When a filter is triggered:
+
+```
+Message Sent → Regex Match → Block Message → Timeout User → Log Alert
+```
+
+### Timeout Duration
+
+All filters apply a **60-second timeout** by default. This can be modified by editing the AutoMod rule in Discord's server settings.
+
+**Source:** `~/workspace/source/src/commands/config/filter/emails.ts:46-50`
+
+## Troubleshooting
+
+<Accordion title="Filter Not Working">
+  If your filter isn't blocking content:
+  
+  1. Ensure both you and Bastion have **Manage Guild** permission
+  2. Check that the filter is enabled (run the command again to verify)
+  3. Verify the AutoMod rule exists in Server Settings > AutoMod
+  4. Check for role/channel exemptions that might bypass the filter
+</Accordion>
+
+<Accordion title="Filter Too Restrictive">
+  If the filter is blocking legitimate content:
+  
+  1. Add exemptions for trusted roles in Discord's AutoMod settings
+  2. Exempt specific channels where that content is allowed
+  3. Consider disabling the filter and using manual moderation instead
+</Accordion>
+
+<Accordion title="No Alert Messages">
+  If filter violations aren't being logged:
+  
+  1. Ensure `moderationLogChannel` is configured in your guild settings
+  2. Verify Bastion has permission to send messages in that channel
+  3. Check that the channel ID is correct
+</Accordion>

@@ -1,0 +1,166 @@
+---
+title: Calculate
+description: Evaluate mathematical expressions with support for various operations and functions
+---
+
+The `/calculate` command evaluates mathematical expressions using the math.js library. It supports basic arithmetic, advanced math functions, constants, and complex calculations.
+
+## Usage
+
+```
+/calculate expression:<mathematical_expression>
+```
+
+## Parameters
+
+<ParamField path="expression" type="string" required>
+  The mathematical expression you want to evaluate. Supports numbers, operators, functions, and constants.
+</ParamField>
+
+## Examples
+
+### Basic Arithmetic
+
+```
+/calculate expression:2 + 2
+```
+
+Result: `4`
+
+```
+/calculate expression:15 * 7
+```
+
+Result: `105`
+
+```
+/calculate expression:100 / 4
+```
+
+Result: `25`
+
+### Advanced Operations
+
+```
+/calculate expression:2^8
+```
+
+Result: `256`
+
+```
+/calculate expression:sqrt(144)
+```
+
+Result: `12`
+
+```
+/calculate expression:abs(-42)
+```
+
+Result: `42`
+
+### Trigonometric Functions
+
+```
+/calculate expression:sin(pi/2)
+```
+
+Result: `1`
+
+```
+/calculate expression:cos(0)
+```
+
+Result: `1`
+
+```
+/calculate expression:tan(pi/4)
+```
+
+Result: `0.9999999999999999`
+
+### Complex Expressions
+
+```
+/calculate expression:(5 + 3) * 2 - 7
+```
+
+Result: `9`
+
+```
+/calculate expression:log(100) + sqrt(25)
+```
+
+Result: `9.605170185988092`
+
+```
+/calculate expression:round(pi * 10) / 10
+```
+
+Result: `3.1`
+
+## Supported Operations
+
+### Arithmetic Operators
+
+- `+` - Addition
+- `-` - Subtraction
+- `*` - Multiplication
+- `/` - Division
+- `%` - Modulo
+- `^` - Exponentiation
+
+### Mathematical Functions
+
+<Info>
+The command supports a wide range of math.js functions including:
+
+**Basic:**
+- `sqrt(x)` - Square root
+- `abs(x)` - Absolute value
+- `round(x)` - Round to nearest integer
+- `ceil(x)` - Round up
+- `floor(x)` - Round down
+- `log(x)` - Natural logarithm
+- `log10(x)` - Base-10 logarithm
+
+**Trigonometric:**
+- `sin(x)`, `cos(x)`, `tan(x)`
+- `asin(x)`, `acos(x)`, `atan(x)`
+- `sinh(x)`, `cosh(x)`, `tanh(x)`
+
+**Constants:**
+- `pi` - π (3.14159...)
+- `e` - Euler's number (2.71828...)
+- `tau` - τ (2π)
+
+For a complete list, see the [math.js documentation](https://mathjs.org/docs/reference/functions.html).
+</Info>
+
+## Error Handling
+
+<Note>
+If the expression is invalid or cannot be evaluated, the command will return an error message showing what went wrong. Errors are displayed ephemerally (only visible to you).
+</Note>
+
+### Example Error
+
+```
+/calculate expression:2 +/ 3
+```
+
+Result (ephemeral):
+```js
+SyntaxError: Value expected (char 4)
+```
+
+## Tips
+
+- Use parentheses `()` to control the order of operations
+- Mathematical constants like `pi` and `e` are available without quotes
+- Function names are case-sensitive (use lowercase)
+- Spaces are optional but can improve readability
+
+## Source Code
+
+Implementation: `src/commands/calculate.ts:27-49`

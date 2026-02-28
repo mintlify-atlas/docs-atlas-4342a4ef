@@ -1,0 +1,249 @@
+---
+title: Games Commands
+description: Fun game commands for entertainment in your Discord server - includes 8ball, flip, roll, rock-paper-scissors, and russian-roulette.
+---
+
+Bastion provides several entertaining game commands that members can use to have fun in your server. These commands range from asking the magic 8 ball questions to playing dice games and rock-paper-scissors.
+
+## Magic 8 Ball
+
+Ask any question to the magic 8 ball and get mystical answers.
+
+```bash
+/8ball question:Will I win the lottery?
+```
+
+### Parameters
+
+<ParamField path="question" type="string" required>
+  The question you want to ask the magic 8 ball.
+</ParamField>
+
+### Possible Answers
+
+The magic 8 ball can respond with one of 20 possible answers:
+
+**Affirmative Answers:**
+- It's certain
+- It's decidedly so
+- Without a doubt
+- Yes definitely
+- You may rely on it
+- As I see it, yes
+- Most likely
+- Outlook good
+- Yes
+- Signs point to yes
+
+**Non-committal Answers:**
+- Reply hazy try again
+- Ask again later
+- Better not tell you now
+- Cannot predict now
+- Concentrate and ask again
+
+**Negative Answers:**
+- Don't count on it
+- My reply is no
+- My sources say no
+- Outlook not so good
+- Very doubtful
+
+### Example Usage
+
+```bash
+# Ask a yes/no question
+/8ball question:Should I study today?
+
+# Ask about the future
+/8ball question:Will it rain tomorrow?
+```
+
+## Coin Flip
+
+Flip one or multiple coins and see the result.
+
+```bash
+/flip coins:3
+```
+
+### Parameters
+
+<ParamField path="coins" type="integer" default="1">
+  The number of coins to flip. Must be between 1 and 128.
+</ParamField>
+
+### Example Usage
+
+```bash
+# Flip a single coin
+/flip
+
+# Flip multiple coins
+/flip coins:5
+
+# Maximum coins
+/flip coins:128
+```
+
+### Output Format
+
+Results are displayed separated by slashes:
+```
+Heads / Tails / Heads
+```
+
+<Note>
+  Each coin has an equal 50% chance of landing on Heads or Tails.
+</Note>
+
+## Dice Roll
+
+Roll dice using standard dice notation and see the result. Supports modifiers for complex calculations.
+
+```bash
+/roll notation:2d6+5
+```
+
+### Parameters
+
+<ParamField path="notation" type="string" default="1d6">
+  The dice notation. Format: `[number of dice]d[faces][modifiers]`
+  
+  Examples:
+  - `d6` - Roll a single 6-sided die
+  - `2d20` - Roll two 20-sided dice
+  - `3d6+5` - Roll three 6-sided dice and add 5
+  - `1d20-2` - Roll a 20-sided die and subtract 2
+  - `2d6*3` - Roll two 6-sided dice and multiply by 3
+</ParamField>
+
+### Dice Notation Guide
+
+**Basic Format:** `XdY`
+- `X` = Number of dice to roll (optional, defaults to 1)
+- `d` = Dice notation indicator (required)
+- `Y` = Number of faces on each die (optional, defaults to 6)
+
+**Modifiers:**
+You can add up to 2 modifiers to your roll:
+- `+N` - Add N to the result
+- `-N` - Subtract N from the result
+- `*N` or `xN` - Multiply the result by N
+- `/N` - Divide the result by N
+
+### Example Usage
+
+```bash
+# Standard D&D rolls
+/roll notation:1d20           # Roll a d20
+/roll notation:4d6            # Roll 4d6 (common for ability scores)
+/roll notation:2d10+3         # Roll 2d10 and add 3
+
+# Complex calculations
+/roll notation:3d6+2-1        # Roll 3d6, add 2, subtract 1
+/roll notation:1d20+5         # Attack roll with +5 modifier
+/roll notation:8d6            # Fireball damage
+
+# Custom dice
+/roll notation:1d100          # Percentile roll
+/roll notation:2d12+10        # 2d12 with bonus
+```
+
+### Output
+
+The command displays:
+- Individual die results
+- Applied modifiers (if any)
+- Final calculated result
+
+<Note>
+  If the dice notation is invalid, Bastion will notify you with an error message.
+</Note>
+
+## Rock Paper Scissors
+
+Play rock paper scissors with Bastion.
+
+```bash
+/rps choice:Rock
+```
+
+### Parameters
+
+<ParamField path="choice" type="string" required>
+  Your choice in the game.
+  
+  Options:
+  - `Rock`
+  - `Paper`
+  - `Scissor`
+</ParamField>
+
+### Game Rules
+
+- Rock beats Scissor
+- Scissor beats Paper
+- Paper beats Rock
+
+### Example Usage
+
+```bash
+/rps choice:Rock
+/rps choice:Paper
+/rps choice:Scissor
+```
+
+### Possible Outcomes
+
+- **Win:** "You win, human."
+- **Lose:** "I win! Sorry, human. 😋"
+- **Draw:** "Damn! It's a draw, mate."
+
+<Note>
+  Bastion makes a random choice each time, so it's a fair game! (Well, except on April 1st... 🎭)
+</Note>
+
+## Russian Roulette
+
+Play a game of Russian roulette. Test your luck across multiple rounds!
+
+```bash
+/russian-roulette rounds:3
+```
+
+### Parameters
+
+<ParamField path="rounds" type="integer" default="1">
+  The number of rounds you want to play. Must be between 1 and 6.
+</ParamField>
+
+### Example Usage
+
+```bash
+# Single round
+/russian-roulette
+
+# Multiple rounds
+/russian-roulette rounds:3
+
+# Maximum rounds
+/russian-roulette rounds:6
+```
+
+### Possible Outcomes
+
+Each round has two possible outcomes:
+- 🔫 **BANG! It's over, buddy.** - Game ends immediately
+- **You got lucky, human.** - You survive this round
+
+<Note>
+  The game automatically ends when you get "BANG!", even if you specified more rounds.
+</Note>
+
+## Tips
+
+- All game commands are designed for entertainment and don't affect server members or permissions
+- These commands work in any channel where Bastion has permission to send messages
+- Game results are completely random and fair
+- You can use these commands to make decisions, settle debates, or just have fun!

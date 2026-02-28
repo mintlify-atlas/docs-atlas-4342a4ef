@@ -1,0 +1,425 @@
+---
+title: Music
+description: Play music in voice channels with Bastion's YouTube-powered music player featuring queue management, playback controls, and playlist support.
+---
+
+Bastion includes a full-featured music player that lets you play songs from YouTube in your Discord voice channels. Manage queues, create playlists, and enjoy seamless playback.
+
+<Warning>
+Music features are only available for **Premium Servers** in the Public Bastion. If you're self-hosting, music is available by default.
+</Warning>
+
+## Getting Started
+
+Before using music features, you need to enable music in your server.
+
+### Enable Music
+
+Configure music settings in your guild configuration:
+
+```yaml
+# Enable music features
+music: true
+
+# Optional: Restrict to specific channel
+musicChannel: "voice-channel-id"
+
+# Optional: Restrict to specific role  
+musicRole: "role-id"
+```
+
+**Configuration Options:**
+
+<Accordion title="music">
+  **Type:** Boolean
+  
+  **Default:** `false`
+  
+  Master switch for music features. Must be `true` to use music commands.
+  
+  **Database Field:** `Guild.music`
+  
+  **Source:** `~/workspace/source/src/models/Guild.ts:20`
+</Accordion>
+
+<Accordion title="musicChannel">
+  **Type:** Channel ID (string)
+  
+  **Default:** None (any voice channel)
+  
+  Restricts music playback to a specific voice channel. If set, music commands only work in this channel.
+  
+  **Database Field:** `Guild.musicChannel`
+  
+  **Source:** `~/workspace/source/src/models/Guild.ts:21`
+</Accordion>
+
+<Accordion title="musicRole">
+  **Type:** Role ID (string)
+  
+  **Default:** None (all members)
+  
+  Restricts music commands to members with a specific role.
+  
+  **Database Field:** `Guild.musicRole`
+  
+  **Source:** `~/workspace/source/src/models/Guild.ts:22`
+</Accordion>
+
+## Playing Music
+
+Play songs from YouTube by name or URL.
+
+### Play Command
+
+Use `/music play` to play a song:
+
+```
+/music play song:Imagine Dragons - Believer
+```
+
+Or use a direct YouTube URL:
+
+```
+/music play song:https://www.youtube.com/watch?v=dQw4w9WgXcQ
+```
+
+**Parameters:**
+- `song` (required) - Song name or YouTube URL/link
+
+**What Happens:**
+1. Bastion searches YouTube for the song (if a name is provided)
+2. Finds the best match
+3. If nothing is playing, starts playing immediately
+4. If something is playing, adds the song to the queue
+
+**Source:** `~/workspace/source/src/commands/music/play.ts:20`
+
+<Note>
+Music commands must be used in voice channels. Bastion will automatically join your voice channel when you play a song.
+</Note>
+
+### YouTube Playlists
+
+Play entire YouTube playlists with a single command:
+
+```
+/music play song:https://www.youtube.com/playlist?list=PLxxxxxx
+```
+
+**Playlist Behavior:**
+- All songs from the playlist are added to the queue
+- The first song plays immediately (if nothing is playing)
+- Remaining songs are queued in order
+- Shows confirmation with playlist name and song count
+
+**Source:** `~/workspace/source/src/commands/music/play.ts:171-201`
+
+## Queue Management
+
+Manage your music queue with powerful queue commands.
+
+### Queue Command
+
+View the current music queue:
+
+```
+/music queue
+```
+
+**Queue Display:**
+- Currently playing song
+- Next 10 songs in queue
+- Who requested each song
+- Total number of songs in queue
+
+**Source:** `~/workspace/source/src/commands/music/queue.ts:14`
+
+<Tabs>
+  <Tab title="View Queue">
+    ```
+    /music queue
+    ```
+    
+    Shows the current queue with:
+    - Now playing information
+    - Up to 10 upcoming songs
+    - Requester for each song
+    - Total queue length
+  </Tab>
+  
+  <Tab title="Remove Songs">
+    ```
+    /music queue remove:never gonna
+    ```
+    
+    Removes all songs matching "never gonna" from the queue.
+    
+    Useful for removing unwanted songs without clearing the entire queue.
+  </Tab>
+  
+  <Tab title="Clear Queue">
+    ```
+    /music queue clear:true
+    ```
+    
+    Removes all songs from the queue.
+    
+    <Warning>
+    This doesn't stop the currently playing song. Use `/music stop` to stop playback completely.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Playback Controls
+
+Control music playback with intuitive commands.
+
+<CardGroup cols={2}>
+  <Card title="Pause" icon="pause">
+    Pause the current song:
+    
+    ```
+    /music pause
+    ```
+    
+    The song remains loaded and can be resumed.
+  </Card>
+  
+  <Card title="Resume" icon="play">
+    Resume a paused song:
+    
+    ```
+    /music resume
+    ```
+    
+    Continues playback from where it was paused.
+  </Card>
+  
+  <Card title="Skip" icon="forward">
+    Skip to the next song in queue:
+    
+    ```
+    /music skip
+    ```
+    
+    Stops current song and plays the next queued song.
+  </Card>
+  
+  <Card title="Stop" icon="stop">
+    Stop playback completely:
+    
+    ```
+    /music stop
+    ```
+    
+    Clears the queue and disconnects from voice.
+  </Card>
+</CardGroup>
+
+### Additional Controls
+
+<Accordion title="Shuffle">
+  Shuffle the current queue:
+  
+  ```
+  /music shuffle
+  ```
+  
+  Randomizes the order of all songs in the queue. The currently playing song is not affected.
+</Accordion>
+
+<Accordion title="Now Playing">
+  See what's currently playing:
+  
+  ```
+  /music now
+  ```
+  
+  Shows details about the current song including who requested it.
+</Accordion>
+
+<Accordion title="Join Voice">
+  Make Bastion join your voice channel:
+  
+  ```
+  /music join
+  ```
+  
+  Useful if Bastion disconnected but you want to keep it in the channel.
+</Accordion>
+
+**Source:** `~/workspace/source/src/commands/music/pause.ts:14`, `~/workspace/source/src/commands/music/skip.ts:14`
+
+## How It Works
+
+Understanding Bastion's music system architecture.
+
+### Music Studio
+
+Each server has its own "Music Studio" - an in-memory player instance:
+
+```typescript
+interface Studio {
+  player: AudioPlayer;     // Discord.js audio player
+  queue: Song[];           // Queue of upcoming songs
+}
+```
+
+The studio is created when you first play music and destroyed when playback stops.
+
+**Source:** `~/workspace/source/src/commands/music/play.ts:109-122`
+
+### Audio Pipeline
+
+<Steps>
+  <Step title="Request Song">
+    User runs `/music play` with a song name or URL.
+  </Step>
+  
+  <Step title="Search/Fetch">
+    Bastion searches YouTube (or validates URL) to get video details.
+  </Step>
+  
+  <Step title="Queue or Play">
+    If nothing is playing, create audio stream and play immediately.
+    
+    Otherwise, add to queue.
+  </Step>
+  
+  <Step title="Audio Streaming">
+    Bastion streams audio from YouTube in real-time (no downloading).
+  </Step>
+  
+  <Step title="Auto-Advance">
+    When a song ends, automatically play the next song in queue.
+  </Step>
+  
+  <Step title="Cleanup">
+    When queue is empty, stop the player and leave voice channel.
+  </Step>
+</Steps>
+
+**Source:** `~/workspace/source/src/commands/music/play.ts:77-104`
+
+### Voice Connection
+
+Bastion manages voice connections intelligently:
+
+- **Auto-join:** Joins your voice channel when you play music
+- **Auto-leave:** Leaves when the queue is empty
+- **Reconnection:** Attempts to reconnect if disconnected briefly
+- **Cleanup:** Destroys the studio if connection fails permanently
+
+**Source:** `~/workspace/source/src/commands/music/play.ts:35-71`
+
+## Queue Data Structure
+
+Each song in the queue has the following structure:
+
+```typescript
+interface Song {
+  name: string;        // Song title
+  url: string;         // YouTube URL
+  duration: number;    // Duration in seconds
+  user: string;        // Username who requested it
+}
+```
+
+**Source:** `~/workspace/source/src/commands/music/play.ts:215-220`
+
+## Best Practices
+
+<Accordion title="Dedicated Music Channel">
+  Set a `musicChannel` to keep music activity organized:
+  
+  - Prevents music spam in general voice channels
+  - Makes it clear where music features are available
+  - Helps manage server permissions and roles
+  
+  Ideal for larger servers with multiple voice channels.
+</Accordion>
+
+<Accordion title="Music Role Restrictions">
+  Use `musicRole` to control who can play music:
+  
+  - Prevents random members from interrupting
+  - Useful for DJ roles or trusted members
+  - Reduces potential for abuse
+  
+  Consider creating a "DJ" role with this permission.
+</Accordion>
+
+<Accordion title="Queue Management">
+  Encourage good queue etiquette:
+  
+  - Don't flood the queue with too many songs
+  - Use `/music queue remove` instead of clearing everything
+  - Let others add songs too
+  - Respect skip requests from the channel
+  
+  Consider moderator oversight for the music channel.
+</Accordion>
+
+<Accordion title="Playlist Usage">
+  When using playlists:
+  
+  - Verify the playlist before adding (check song count)
+  - Avoid extremely long playlists (100+ songs)
+  - Use `/music queue clear` if you added too much
+  - Consider smaller, curated playlists
+</Accordion>
+
+## Troubleshooting
+
+<Accordion title="Music Not Enabled">
+  If you see "Music is not enabled in the server":
+  
+  1. Set `music: true` in your guild configuration
+  2. Ensure you have permission to modify the configuration
+  3. Restart Bastion if you edited the config manually
+</Accordion>
+
+<Accordion title="Premium Required">
+  If using Public Bastion and seeing "Premium required":
+  
+  1. Music is a Premium-only feature on Public Bastion
+  2. Upgrade your server to Bastion Premium
+  3. Or self-host Bastion to get music features for free
+</Accordion>
+
+<Accordion title="Can't Use Commands">
+  If music commands don't work:
+  
+  1. Ensure you're in a voice channel
+  2. Check that you have the required `musicRole` (if set)
+  3. Verify you're in the correct `musicChannel` (if set)
+  4. Ensure Bastion has permission to join and speak in the voice channel
+</Accordion>
+
+<Accordion title="No Audio Playing">
+  If Bastion joins but no audio plays:
+  
+  1. Check Discord voice settings (output device)
+  2. Verify Bastion isn't muted in the voice channel
+  3. Try leaving and rejoining the voice channel
+  4. Check if the YouTube video is age-restricted or region-locked
+</Accordion>
+
+<Accordion title="Bot Disconnects Randomly">
+  If Bastion keeps disconnecting:
+  
+  1. Check your server's connection stability
+  2. Verify Bastion has stable hosting
+  3. Check Discord API status for outages
+  4. Review Bastion logs for connection errors
+</Accordion>
+
+## Performance Notes
+
+- **Streaming:** Music is streamed in real-time, no local storage used
+- **Quality:** Audio quality is set to level 2 (good balance of quality/bandwidth)
+- **Memory:** Each active studio uses minimal memory
+- **Concurrent:** Each server can have its own independent music session
+
+**Source:** `~/workspace/source/src/commands/music/play.ts:128`
